@@ -1,99 +1,145 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as math from 'mathjs';
+
 import CreateFunctionForm from './components/CreateFunctionForm';
 import UseFunctionForm from './components/UseFunctionForm';
+import CalculationChain from './components/CalculationChain';
+import ChainInput from './components/ChainInput';
+import ChainResult from './components/ChainResult';
 import './App.css';
 
 function App() {
   const [functions, setFunctions] = useState([]);
-  const [result, setResult] = useState(null);
-  const [editingFunction, setEditingFunction] = useState(null); // State to track the function being edited
+  const [editingFunction, setEditingFunction] = useState(null);
+  
+  const [calculationChain, setCalculationChain] = useState([]);
+  const [chainResults, setChainResults] = useState([]);
 
   const isInitialMount = useRef(true);
 
-  // Load from localStorage (no changes here)
+  // Load from localStorage
   useEffect(() => {
-    try {
-      const savedFunctions = localStorage.getItem('customFunctions');
-      if (savedFunctions) {
-        setFunctions(JSON.parse(savedFunctions));
-      }
-    } catch (error) {
-      console.error("Failed to load functions from localStorage", error);
-    }
+    const savedFunctions = localStorage.getItem('customFunctions');
+    if (savedFunctions) setFunctions(JSON.parse(savedFunctions));
   }, []);
 
-  // Save to localStorage (no changes here)
+  // Save to localStorage
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
     } else {
-      try {
-        localStorage.setItem('customFunctions', JSON.stringify(functions));
-      } catch (error) {
-        console.error("Failed to save functions to localStorage", error);
-      }
+      localStorage.setItem('customFunctions', JSON.stringify(functions));
     }
   }, [functions]);
-
-  // --- NEW: Handler to set the app to "edit mode" ---
-  const handleInitiateEdit = (funcToEdit) => {
-    setEditingFunction(funcToEdit);
-    window.scrollTo(0, 0); // Scroll to top to see the edit form
+  
+  // --- Chain Management ---
+  const handleAddToChain = (func) => {
+    setCalculationChain(prev => [...prev, func]);
+    setChainResults([]);
   };
 
-  // --- NEW: Handler to cancel edit mode ---
-  const handleCancelEdit = () => {
-    setEditingFunction(null);
+  const handleRemoveFromChain = (indexToRemove) => {
+    setCalculationChain(prev => prev.filter((_, index) => index !== indexToRemove));
+    setChainResults([]);
   };
 
-  // --- UPDATED: Now handles both creating and updating ---
+  const handleClearChain = () => {
+    setCalculationChain([]);
+    setChainResults([]);
+  };
+
+  // --- NEW: Handler for single function calculations ---
+  const handleSingleCalculation = (func, variableValues) => {
+    try {
+      // We can display the single result using our existing chain result component
+      const result = math.evaluate(func.expression, variableValues);
+      setChainResults([{ name: func.name, result }]);
+      // Also clear the main chain if a single calculation is run
+      setCalculationChain([]);
+    } catch (e) {
+      alert(`Error during calculation: ${e.message}`);
+      setChainResults([]);
+    }
+  };
+
+  // --- Core Chained Calculation Logic ---
+  const handleChainCalculation = (initialVariableValues) => {
+    const results = [];
+    let currentScope = { ...initialVariableValues };
+    
+    try {
+      for (const func of calculationChain) {
+        const result = math.evaluate(func.expression, currentScope);
+        const resultKey = `resultOf${func.name.replace(/\s/g, '')}`;
+        
+        results.push({ name: func.name, result });
+        currentScope[resultKey] = result;
+      }
+      setChainResults(results);
+    } catch (e) {
+      alert(`Error during calculation: ${e.message}`);
+      setChainResults([]);
+    }
+  };
+
+  // --- Edit/Save/Delete Handlers (no changes) ---
   const handleSaveOrUpdateFunction = (funcData, isUpdating) => {
     if (isUpdating) {
-      // Update existing function
       setFunctions(functions.map(f => (f.name === funcData.name ? funcData : f)));
     } else {
-      // Add new function (check for duplicates first)
       if (functions.some(f => f.name === funcData.name)) {
         alert("A function with this name already exists.");
         return;
       }
       setFunctions([...functions, funcData]);
     }
-    setEditingFunction(null); // Exit edit mode after action
+    setEditingFunction(null);
   };
 
-  // --- NEW: Handler to delete a function ---
+  const handleInitiateEdit = (funcToEdit) => {
+    setEditingFunction(funcToEdit);
+    window.scrollTo(0, 0);
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingFunction(null);
+  };
+
   const handleDeleteFunction = (functionName) => {
-    // If deleting the function that is currently being edited, exit edit mode
     if (editingFunction && editingFunction.name === functionName) {
       setEditingFunction(null);
     }
     setFunctions(functions.filter(f => f.name !== functionName));
   };
 
-  const handleCalculate = (calcResult) => {
-    setResult(calcResult);
-  };
 
   return (
     <div className="App">
       <h1>Custom Calculator</h1>
-      <CreateFunctionForm
-        onSaveOrUpdate={handleSaveOrUpdateFunction}
-        editingFunction={editingFunction}
+      {/* The `onDelete` and `onEdit` props were added to CreateFunctionForm previously, let's remove them to avoid confusion */}
+      <CreateFunctionForm 
+        onSaveOrUpdate={handleSaveOrUpdateFunction} 
+        editingFunction={editingFunction} 
         onCancelEdit={handleCancelEdit}
       />
-      <UseFunctionForm
-        functions={functions}
-        onCalculate={handleCalculate}
+      {/* Pass both the single calculation and chain handlers */}
+      <UseFunctionForm 
+        functions={functions} 
+        onAddToChain={handleAddToChain}
+        onCalculate={handleSingleCalculation}
         onEdit={handleInitiateEdit}
         onDelete={handleDeleteFunction}
       />
-      {result !== null && (
-        <div className="result">
-          Result: {result}
-        </div>
-      )}
+      
+      <CalculationChain 
+        chain={calculationChain} 
+        onRemove={handleRemoveFromChain} 
+        onClear={handleClearChain} 
+      />
+
+      <ChainInput chain={calculationChain} onCalculate={handleChainCalculation} />
+
+      <ChainResult results={chainResults} />
     </div>
   );
 }

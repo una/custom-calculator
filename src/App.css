@@ -88,3 +88,89 @@ button:hover {
     font-size: 14px;
     margin-top: 5px;
 }
+
+.calculation-chain-list {
+  list-style-type: decimal;
+  padding-left: 20px;
+}
+
+.calculation-chain-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 5px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.calculation-chain-list li span {
+  font-weight: 500;
+}
+
+.remove-btn {
+  background-color: #ef5350; /* Light red */
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.result-section {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #e8eaf6;
+  border-radius: 8px;
+  border: 1px solid #c5cae9;
+}
+
+.result-section h3 {
+  margin-top: 0;
+}
+
+.result-steps {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 15px;
+}
+
+.result-steps li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #c5cae9;
+}
+
+.result-step-name {
+  font-weight: bold;
+  color: #3f51b5;
+}
+
+.result-step-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+}
+
+/* Style for the notes textarea in the form */
+.form-group textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit; /* Use the same font as other inputs */
+  resize: vertical; /* Allow vertical resizing */
+}
+
+/* Style for displaying notes below the formula */
+.function-notes {
+  padding: 10px 15px;
+  background-color: #fffde7; /* A light yellow, like a sticky note */
+  border-left: 4px solid #fbc02d; /* A darker yellow border */
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+.function-notes p {
+  margin: 0;
+  font-style: italic;
+  color: #5f6368;
+}
