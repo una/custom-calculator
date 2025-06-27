@@ -1,80 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import * as math from 'mathjs';
 
-function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
-  const [selectedFunc, setSelectedFunc] = useState('');
+function UseFunctionForm({ functions, onCalculate, onAddToChain, onEdit, onDelete }) {
+  const [selectedFuncName, setSelectedFuncName] = useState('');
   const [variableValues, setVariableValues] = useState({});
-  const [error, setError] = useState('');
 
-  // This effect now also clears the selection if the functions list changes (e.g., after a delete)
-  useEffect(() => {
-    // If the currently selected function no longer exists in the list, reset the form
-    if (selectedFunc && !functions.some(f => f.name === selectedFunc)) {
-      setSelectedFunc('');
-    }
-  }, [functions, selectedFunc]);
+  const currentFunction = functions.find(f => f.name === selectedFuncName);
 
-
+  // When the selected function changes, reset the variable inputs and clear results
   useEffect(() => {
     setVariableValues({});
-    setError('');
-  }, [selectedFunc]);
+    if (onCalculate) {
+      onCalculate(null);
+    }
+  }, [selectedFuncName, onCalculate]);
 
-  const handleSelectChange = (e) => {
-    const funcName = e.target.value;
-    setSelectedFunc(funcName);
-  };
+  // useEffect for live calculations
+  useEffect(() => {
+    if (!currentFunction) return;
 
+    const variables = currentFunction.variables.split(',').map(v => v.trim()).filter(v => !v.startsWith('resultOf'));
+    const allInputsFilled = variables.every(v => variableValues[v] && variableValues[v] !== '');
+
+    if (allInputsFilled) {
+      const scope = {};
+      let allInputsValid = true;
+      for (const v of variables) {
+        scope[v] = parseFloat(variableValues[v]);
+        if (isNaN(scope[v])) {
+          allInputsValid = false;
+          break;
+        }
+      }
+      if (allInputsValid) {
+        onCalculate(currentFunction, scope);
+      }
+    } else {
+      onCalculate(null);
+    }
+  }, [variableValues, currentFunction, onCalculate]);
+
+  
   const handleVariableChange = (varName, value) => {
-    setVariableValues({ ...variableValues, [varName]: value });
+    setVariableValues(prev => ({ ...prev, [varName]: value }));
   };
   
+  const handleAddClick = () => {
+    if (currentFunction) onAddToChain(currentFunction);
+  };
+
   const handleDeleteClick = (funcName) => {
     if (window.confirm(`Are you sure you want to delete the function "${funcName}"?`)) {
         onDelete(funcName);
+        setSelectedFuncName('');
     }
   };
-
-  const handleCalculate = () => {
-    // ... (calculation logic remains the same)
-    const func = functions.find(f => f.name === selectedFunc);
-    if (!func) {
-      setError('Please select a function.');
-      return;
-    }
-    const scope = {};
-    const variables = func.variables.split(',').map(v => v.trim());
-    for (const v of variables) {
-      if (variableValues[v] === undefined || variableValues[v] === '') {
-        setError(`Please enter a value for "${v}".`);
-        onCalculate(null);
-        return;
-      }
-      scope[v] = parseFloat(variableValues[v]);
-      if (isNaN(scope[v])) {
-        setError(`Invalid number for variable "${v}".`);
-        onCalculate(null);
-        return;
-      }
-    }
-    try {
-      const result = math.evaluate(func.expression, scope);
-      setError('');
-      onCalculate(result);
-    } catch (e) {
-      setError(`Error in expression: ${e.message}`);
-      onCalculate(null);
-    }
-  };
-
-  const currentFunction = functions.find(f => f.name === selectedFunc);
 
   return (
     <div className="form-section">
-      <h2>Use Saved Function</h2>
+      <h2>Use a Function</h2>
       <div className="form-group">
         <label>Select Function</label>
-        <select value={selectedFunc} onChange={handleSelectChange}>
+        <select value={selectedFuncName} onChange={e => setSelectedFuncName(e.target.value)}>
           <option value="">-- Select a function --</option>
           {functions.map((func) => (
             <option key={func.name} value={func.name}>{func.name}</option>
@@ -87,8 +73,6 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
           <div className="function-reference">
             <strong>Formula:</strong> <code>{currentFunction.expression}</code>
           </div>
-
-          {/* --- Display the function's notes if they exist --- */}
           {currentFunction.notes && (
             <div className="function-notes">
               <p>{currentFunction.notes}</p>
@@ -99,6 +83,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
             <h4>Enter Variable Values:</h4>
             {currentFunction.variables.split(',').map((v) => {
               const varName = v.trim();
+              if (varName.startsWith('resultOf')) return null; 
               return (
                 <div className="form-group" key={varName}>
                   <label>{varName}</label>
@@ -113,13 +98,15 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
           </div>
 
           <div className="form-actions">
-            <button onClick={handleCalculate}>Calculate</button>
+            {/* "Calculate Now" button was removed for live calculations */}
+            <button className="add-to-chain-btn" onClick={handleAddClick}>Add to Chain</button>
+          </div>
+           <div className="form-actions-secondary">
             <button className="edit-btn" onClick={() => onEdit(currentFunction)}>Edit</button>
             <button className="delete-btn" onClick={() => handleDeleteClick(currentFunction.name)}>Delete</button>
           </div>
         </>
       )}
-      {error && <p className="error">{error}</p>}
     </div>
   );
 }
