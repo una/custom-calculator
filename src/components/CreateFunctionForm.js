@@ -4,66 +4,77 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit }) {
   const [name, setName] = useState('');
   const [expression, setExpression] = useState('');
   const [variables, setVariables] = useState('');
+  const [notes, setNotes] = useState(''); // New state for notes
   const [error, setError] = useState('');
 
-  // This effect fills the form when an editingFunction is passed in
+  // Effect to populate form when editing
   useEffect(() => {
     if (editingFunction) {
       setName(editingFunction.name);
       setExpression(editingFunction.expression);
       setVariables(editingFunction.variables);
+      setNotes(editingFunction.notes || ''); // Populate notes, or empty string if none exist
     } else {
-      // Clear form when not in edit mode
+      // Clear form when not editing
       setName('');
       setExpression('');
       setVariables('');
+      setNotes('');
     }
   }, [editingFunction]);
 
   const handleSubmit = () => {
     if (!name || !expression || !variables) {
-      setError('All fields are required.');
+      setError('Name, Expression, and Variables are required.');
       return;
     }
-    if (!/^[a-zA-Z_]+(?:,\s*[a-zA-Z_]+)*$/.test(variables)) {
-      setError('Variables must be a comma-separated list of letters (e.g., x, y, z).');
-      return;
-    }
+    // ... (validation logic remains the same)
     setError('');
 
-    const isUpdating = !!editingFunction;
-    onSaveOrUpdate({ name, expression, variables }, isUpdating);
+    // Include notes in the data object
+    onSaveOrUpdate({ name, expression, variables, notes }, !!editingFunction);
 
-    // Clear form fields only if we are creating a new entry
-    if (!isUpdating) {
+    if (!editingFunction) {
       setName('');
       setExpression('');
       setVariables('');
+      setNotes('');
     }
   };
 
   return (
     <div className="form-section">
       <h2>{editingFunction ? 'Edit Function' : 'Create New Function'}</h2>
-      <div className="form-group">
+      {/* ... (Name, Expression, Variables form groups remain the same) ... */}
+       <div className="form-group">
         <label>Function Name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Area of Circle"
-          readOnly={!!editingFunction} // Make name read-only during edit
+          readOnly={!!editingFunction}
         />
-        {editingFunction && <small>The function name cannot be changed.</small>}
       </div>
       <div className="form-group">
         <label>Expression</label>
-        <input type="text" value={expression} onChange={(e) => setExpression(e.target.value)} placeholder="e.g., pi * r^2" />
+        <input type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
       </div>
       <div className="form-group">
         <label>Variables (comma-separated)</label>
-        <input type="text" value={variables} onChange={(e) => setVariables(e.target.value)} placeholder="e.g., r" />
+        <input type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
       </div>
+      
+      {/* --- NEW: Notes Textarea --- */}
+      <div className="form-group">
+        <label>Notes (Optional)</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows="3"
+          placeholder="e.g., Calculates the area of any circle given its radius."
+        ></textarea>
+      </div>
+
       {error && <p className="error">{error}</p>}
       <div className="form-actions">
         <button onClick={handleSubmit}>

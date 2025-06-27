@@ -88,6 +88,13 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
             <strong>Formula:</strong> <code>{currentFunction.expression}</code>
           </div>
 
+          {/* --- Display the function's notes if they exist --- */}
+          {currentFunction.notes && (
+            <div className="function-notes">
+              <p>{currentFunction.notes}</p>
+            </div>
+          )}
+
           <div className="variable-inputs">
             <h4>Enter Variable Values:</h4>
             {currentFunction.variables.split(',').map((v) => {
