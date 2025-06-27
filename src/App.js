@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as math from 'mathjs';
 
 import CreateFunctionForm from './components/CreateFunctionForm';
@@ -11,19 +11,17 @@ import './App.css';
 function App() {
   const [functions, setFunctions] = useState([]);
   const [editingFunction, setEditingFunction] = useState(null);
-  
   const [calculationChain, setCalculationChain] = useState([]);
   const [chainResults, setChainResults] = useState([]);
-
   const isInitialMount = useRef(true);
 
-  // Load from localStorage
+  // Load from localStorage (no changes)
   useEffect(() => {
     const savedFunctions = localStorage.getItem('customFunctions');
     if (savedFunctions) setFunctions(JSON.parse(savedFunctions));
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage (no changes)
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -31,98 +29,98 @@ function App() {
       localStorage.setItem('customFunctions', JSON.stringify(functions));
     }
   }, [functions]);
-  
-  // --- Chain Management ---
-  const handleAddToChain = (func) => {
+
+  // --- Handlers wrapped in useCallback ---
+
+  const handleAddToChain = useCallback((func) => {
     setCalculationChain(prev => [...prev, func]);
     setChainResults([]);
-  };
+  }, []);
 
-  const handleRemoveFromChain = (indexToRemove) => {
+  const handleRemoveFromChain = useCallback((indexToRemove) => {
     setCalculationChain(prev => prev.filter((_, index) => index !== indexToRemove));
     setChainResults([]);
-  };
+  }, []);
 
-  const handleClearChain = () => {
+  const handleClearChain = useCallback(() => {
     setCalculationChain([]);
     setChainResults([]);
-  };
+  }, []);
 
-  // --- NEW: Handler for single function calculations ---
-  const handleSingleCalculation = (func, variableValues) => {
+  // --- FIXED: Single calculation handler ---
+  const handleSingleCalculation = useCallback((func, variableValues) => {
+    // This function should only affect the results display, not the chain.
+    if (!func || !variableValues) {
+      setChainResults([]);
+      return;
+    }
     try {
-      // We can display the single result using our existing chain result component
       const result = math.evaluate(func.expression, variableValues);
       setChainResults([{ name: func.name, result }]);
-      // Also clear the main chain if a single calculation is run
-      setCalculationChain([]);
+      // setCalculationChain([]); // <<< THIS LINE WAS THE BUG AND HAS BEEN REMOVED.
     } catch (e) {
-      alert(`Error during calculation: ${e.message}`);
       setChainResults([]);
     }
-  };
+  }, []);
 
-  // --- Core Chained Calculation Logic ---
-  const handleChainCalculation = (initialVariableValues) => {
+  const handleChainCalculation = useCallback((initialVariableValues) => {
+    if (!initialVariableValues) {
+      setChainResults([]);
+      return;
+    }
     const results = [];
     let currentScope = { ...initialVariableValues };
-    
     try {
       for (const func of calculationChain) {
         const result = math.evaluate(func.expression, currentScope);
         const resultKey = `resultOf${func.name.replace(/\s/g, '')}`;
-        
         results.push({ name: func.name, result });
         currentScope[resultKey] = result;
       }
       setChainResults(results);
     } catch (e) {
-      alert(`Error during calculation: ${e.message}`);
       setChainResults([]);
     }
-  };
+  }, [calculationChain]);
 
-  // --- Edit/Save/Delete Handlers (no changes) ---
-  const handleSaveOrUpdateFunction = (funcData, isUpdating) => {
+  // ... (All other handlers for Edit/Save/Delete remain the same) ...
+  const handleSaveOrUpdateFunction = useCallback((funcData, isUpdating) => {
     if (isUpdating) {
-      setFunctions(functions.map(f => (f.name === funcData.name ? funcData : f)));
+      setFunctions(prev => prev.map(f => (f.name === funcData.name ? funcData : f)));
     } else {
-      if (functions.some(f => f.name === funcData.name)) {
-        alert("A function with this name already exists.");
-        return;
-      }
-      setFunctions([...functions, funcData]);
+      setFunctions(prev => {
+        if (prev.some(f => f.name === funcData.name)) {
+          alert("A function with this name already exists.");
+          return prev;
+        }
+        return [...prev, funcData];
+      });
     }
     setEditingFunction(null);
-  };
+  }, []);
 
-  const handleInitiateEdit = (funcToEdit) => {
+  const handleInitiateEdit = useCallback((funcToEdit) => {
     setEditingFunction(funcToEdit);
     window.scrollTo(0, 0);
-  };
+  }, []);
   
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingFunction(null);
-  };
+  }, []);
 
-  const handleDeleteFunction = (functionName) => {
-    if (editingFunction && editingFunction.name === functionName) {
-      setEditingFunction(null);
-    }
-    setFunctions(functions.filter(f => f.name !== functionName));
-  };
-
+  const handleDeleteFunction = useCallback((functionName) => {
+    setEditingFunction(prev => (prev && prev.name === functionName ? null : prev));
+    setFunctions(prev => prev.filter(f => f.name !== functionName));
+  }, []);
 
   return (
     <div className="App">
       <h1>Custom Calculator</h1>
-      {/* The `onDelete` and `onEdit` props were added to CreateFunctionForm previously, let's remove them to avoid confusion */}
       <CreateFunctionForm 
         onSaveOrUpdate={handleSaveOrUpdateFunction} 
         editingFunction={editingFunction} 
         onCancelEdit={handleCancelEdit}
       />
-      {/* Pass both the single calculation and chain handlers */}
       <UseFunctionForm 
         functions={functions} 
         onAddToChain={handleAddToChain}
@@ -130,15 +128,12 @@ function App() {
         onEdit={handleInitiateEdit}
         onDelete={handleDeleteFunction}
       />
-      
       <CalculationChain 
         chain={calculationChain} 
         onRemove={handleRemoveFromChain} 
         onClear={handleClearChain} 
       />
-
       <ChainInput chain={calculationChain} onCalculate={handleChainCalculation} />
-
       <ChainResult results={chainResults} />
     </div>
   );
