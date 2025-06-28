@@ -4,6 +4,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
   const [selectedFuncName, setSelectedFuncName] = useState('');
   const [variableValues, setVariableValues] = useState({});
 
+  // Memoized calculations to find the current function and its inputs
   const currentFunction = useMemo(() => 
     functions.find(f => f.name === selectedFuncName),
     [selectedFuncName, functions]
@@ -26,18 +27,17 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
 
       return [...allVars].filter(v => !generatedResults.has(v));
     } else {
-      // For single functions, all variables are initial variables
       return currentFunction.variables.split(',').map(v => v.trim());
     }
   }, [currentFunction, functions]);
 
-  // Reset state when selection changes
+  // Effect to clear results when selection changes
   useEffect(() => {
     setVariableValues({});
     onCalculate(null);
   }, [selectedFuncName, onCalculate]);
 
-  // useEffect for live calculations
+  // Effect for live calculations
   useEffect(() => {
     if (!currentFunction) return;
 
@@ -77,17 +77,26 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
       <h2>Use a Function</h2>
       <div className="form-group">
         <label>Select Function to Run</label>
-        <select value={selectedFuncName} onChange={e => setSelectedFuncName(e.target.value)}>
-          <option value="">-- Select a function --</option>
-          {functions.map((func) => (
-            <option key={func.name} value={func.name}>{func.name}</option>
-          ))}
-        </select>
+        {/* --- NEW: Replaced the select dropdown with a visible list --- */}
+        <div className="function-list">
+          {functions.length > 0 ? (
+            functions.map((func) => (
+              <button 
+                key={func.name} 
+                onClick={() => setSelectedFuncName(func.name)}
+                className={`function-list-item ${selectedFuncName === func.name ? 'selected' : ''}`}
+              >
+                {func.name} {func.type === 'chain' && <span className="chain-indicator">[Chain] ⛓️</span>}
+              </button>
+            ))
+          ) : (
+            <p className="no-functions-message">No functions saved yet. Create one above to get started.</p>
+          )}
+        </div>
       </div>
 
       {currentFunction && (
-        <>
-          {/* Notes and Formula are shown for both types */}
+        <div className="function-details">
           {currentFunction.notes && (
             <div className="function-notes"><p>{currentFunction.notes}</p></div>
           )}
@@ -98,7 +107,6 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
              <div className="function-reference"><strong>Type:</strong> Chained Function</div>
           )}
           
-          {/* Render the required inputs */}
           <div className="variable-inputs">
             <h4>Enter Variable Values:</h4>
             {initialVariables.map((varName) => (
@@ -111,14 +119,14 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
                 />
               </div>
             ))}
-             {initialVariables.length === 0 && <p>No initial variables required for this function.</p>}
+             {initialVariables.length === 0 && !currentFunction.variables && <p>No initial variables required for this function.</p>}
           </div>
 
           <div className="form-actions-secondary">
             <button className="edit-btn" onClick={() => onEdit(currentFunction)}>Edit</button>
             <button className="delete-btn" onClick={() => handleDeleteClick(currentFunction.name)}>Delete</button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
