@@ -174,3 +174,32 @@ button:hover {
   font-style: italic;
   color: #5f6368;
 }
+
+/* Styles for the Single/Chained radio buttons */
+.radio-group {
+  display: flex;
+  gap: 20px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 4px;
+}
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: normal;
+}
+
+/* Inset box for the chain builder UI */
+.form-section-inset {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 15px;
+}
+.form-section-inset h4 {
+  margin-top: 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}

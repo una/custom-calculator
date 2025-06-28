@@ -3,25 +3,21 @@ import * as math from 'mathjs';
 
 import CreateFunctionForm from './components/CreateFunctionForm';
 import UseFunctionForm from './components/UseFunctionForm';
-import CalculationChain from './components/CalculationChain';
-import ChainInput from './components/ChainInput';
-import ChainResult from './components/ChainResult';
+import ChainResult from './components/ChainResult'; // We still need this!
 import './App.css';
 
 function App() {
   const [functions, setFunctions] = useState([]);
   const [editingFunction, setEditingFunction] = useState(null);
-  const [calculationChain, setCalculationChain] = useState([]);
-  const [chainResults, setChainResults] = useState([]);
+  const [executionResults, setExecutionResults] = useState([]); // Renamed for clarity
   const isInitialMount = useRef(true);
 
-  // Load from localStorage (no changes)
+  // Load/Save from localStorage
   useEffect(() => {
     const savedFunctions = localStorage.getItem('customFunctions');
     if (savedFunctions) setFunctions(JSON.parse(savedFunctions));
   }, []);
 
-  // Save to localStorage (no changes)
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -30,60 +26,39 @@ function App() {
     }
   }, [functions]);
 
-  // --- Handlers wrapped in useCallback ---
-
-  const handleAddToChain = useCallback((func) => {
-    setCalculationChain(prev => [...prev, func]);
-    setChainResults([]);
-  }, []);
-
-  const handleRemoveFromChain = useCallback((indexToRemove) => {
-    setCalculationChain(prev => prev.filter((_, index) => index !== indexToRemove));
-    setChainResults([]);
-  }, []);
-
-  const handleClearChain = useCallback(() => {
-    setCalculationChain([]);
-    setChainResults([]);
-  }, []);
-
-  // --- FIXED: Single calculation handler ---
-  const handleSingleCalculation = useCallback((func, variableValues) => {
-    // This function should only affect the results display, not the chain.
-    if (!func || !variableValues) {
-      setChainResults([]);
+  // --- Main Calculation Handler ---
+  const handleExecution = useCallback((funcToRun, initialValues) => {
+    if (!funcToRun || !initialValues) {
+      setExecutionResults([]);
       return;
     }
+    
     try {
-      const result = math.evaluate(func.expression, variableValues);
-      setChainResults([{ name: func.name, result }]);
-      // setCalculationChain([]); // <<< THIS LINE WAS THE BUG AND HAS BEEN REMOVED.
-    } catch (e) {
-      setChainResults([]);
-    }
-  }, []);
-
-  const handleChainCalculation = useCallback((initialVariableValues) => {
-    if (!initialVariableValues) {
-      setChainResults([]);
-      return;
-    }
-    const results = [];
-    let currentScope = { ...initialVariableValues };
-    try {
-      for (const func of calculationChain) {
-        const result = math.evaluate(func.expression, currentScope);
-        const resultKey = `resultOf${func.name.replace(/\s/g, '')}`;
-        results.push({ name: func.name, result });
-        currentScope[resultKey] = result;
+      if (funcToRun.type === 'chain') {
+        const results = [];
+        let currentScope = { ...initialValues };
+        
+        for (const funcName of funcToRun.chain) {
+          const func = functions.find(f => f.name === funcName);
+          if (!func) throw new Error(`Chained function "${funcName}" not found.`);
+          
+          const result = math.evaluate(func.expression, currentScope);
+          const resultKey = `resultOf${func.name.replace(/\s/g, '')}`;
+          results.push({ name: func.name, result });
+          currentScope[resultKey] = result;
+        }
+        setExecutionResults(results);
+      } else { // Single function
+        const result = math.evaluate(funcToRun.expression, initialValues);
+        setExecutionResults([{ name: funcToRun.name, result }]);
       }
-      setChainResults(results);
     } catch (e) {
-      setChainResults([]);
+      console.error(e);
+      setExecutionResults([]);
     }
-  }, [calculationChain]);
+  }, [functions]);
 
-  // ... (All other handlers for Edit/Save/Delete remain the same) ...
+  // --- Edit/Save/Delete Handlers ---
   const handleSaveOrUpdateFunction = useCallback((funcData, isUpdating) => {
     if (isUpdating) {
       setFunctions(prev => prev.map(f => (f.name === funcData.name ? funcData : f)));
@@ -120,21 +95,15 @@ function App() {
         onSaveOrUpdate={handleSaveOrUpdateFunction} 
         editingFunction={editingFunction} 
         onCancelEdit={handleCancelEdit}
+        functions={functions} // Pass all functions for the chain builder dropdown
       />
       <UseFunctionForm 
         functions={functions} 
-        onAddToChain={handleAddToChain}
-        onCalculate={handleSingleCalculation}
+        onCalculate={handleExecution} // Renamed prop for clarity
         onEdit={handleInitiateEdit}
         onDelete={handleDeleteFunction}
       />
-      <CalculationChain 
-        chain={calculationChain} 
-        onRemove={handleRemoveFromChain} 
-        onClear={handleClearChain} 
-      />
-      <ChainInput chain={calculationChain} onCalculate={handleChainCalculation} />
-      <ChainResult results={chainResults} />
+      <ChainResult results={executionResults} />
     </div>
   );
 }
