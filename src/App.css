@@ -6,11 +6,15 @@
     --error-color: #c62828; /* Red */
 }
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f9;
-    margin: 0;
-    padding: 20px;
+    background-color: var(--background-color);
     display: flex;
     justify-content: center;
 }
