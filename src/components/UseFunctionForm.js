@@ -3,8 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
   const [selectedFuncName, setSelectedFuncName] = useState('');
   const [variableValues, setVariableValues] = useState({});
+  const [isCollapsed, setIsCollapsed] = useState(false); // New state for collapsing the list
 
-  // Memoized calculations to find the current function and its inputs
   const currentFunction = useMemo(() => 
     functions.find(f => f.name === selectedFuncName),
     [selectedFuncName, functions]
@@ -31,13 +31,15 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     }
   }, [currentFunction, functions]);
 
-  // Effect to clear results when selection changes
   useEffect(() => {
     setVariableValues({});
     onCalculate(null);
+    // Collapse the list whenever a new function is selected
+    if (selectedFuncName) {
+      setIsCollapsed(true);
+    }
   }, [selectedFuncName, onCalculate]);
 
-  // Effect for live calculations
   useEffect(() => {
     if (!currentFunction) return;
 
@@ -69,7 +71,13 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     if (window.confirm(`Are you sure you want to delete "${funcName}"?`)) {
       onDelete(funcName);
       setSelectedFuncName('');
+      setIsCollapsed(false); // Expand list after deletion
     }
+  };
+
+  const handleFunctionSelect = (name) => {
+    setSelectedFuncName(name);
+    setIsCollapsed(true); // Collapse on select
   };
 
   return (
@@ -77,20 +85,34 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
       <h2>Use a Function</h2>
       <div className="form-group">
         <label>Select Function to Run</label>
-        {/* --- NEW: Replaced the select dropdown with a visible list --- */}
-        <div className="function-list">
-          {functions.length > 0 ? (
-            functions.map((func) => (
+        <div className="function-list-container">
+          {/* Conditionally render the full list or the selected item */}
+          {isCollapsed && currentFunction ? (
+            <div className="selected-function-display">
               <button 
-                key={func.name} 
-                onClick={() => setSelectedFuncName(func.name)}
-                className={`function-list-item ${selectedFuncName === func.name ? 'selected' : ''}`}
+                className="function-list-item selected"
+                disabled
               >
-                {func.name} {func.type === 'chain' && <span className="chain-indicator">[Chain] ⛓️</span>}
+                {currentFunction.name} {currentFunction.type === 'chain' && <span className="chain-indicator">[Chain] ⛓️</span>}
               </button>
-            ))
+              <button className="change-btn" onClick={() => setIsCollapsed(false)}>Change</button>
+            </div>
           ) : (
-            <p className="no-functions-message">No functions saved yet. Create one above to get started.</p>
+            <div className="function-list">
+              {functions.length > 0 ? (
+                functions.map((func) => (
+                  <button 
+                    key={func.name} 
+                    onClick={() => handleFunctionSelect(func.name)}
+                    className="function-list-item"
+                  >
+                    {func.name} {func.type === 'chain' && <span className="chain-indicator">[Chain] ⛓️</span>}
+                  </button>
+                ))
+              ) : (
+                <p className="no-functions-message">No functions saved yet. Create one above to get started.</p>
+              )}
+            </div>
           )}
         </div>
       </div>
