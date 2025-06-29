@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "CustomCalc",
+  "name": "Custom Calc",
+  "description": "A programming calculator that allows custom functions, multi-variable support, and function chaining.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#51718a",
   "background_color": "#ffffff"
 }
