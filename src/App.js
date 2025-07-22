@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as math from 'mathjs';
-import { Card, Heading, Button, Flex, Box, Tabs, Dialog } from '@radix-ui/themes';
 import CreateFunctionForm from './components/CreateFunctionForm';
 import UseFunctionForm from './components/UseFunctionForm';
 import ChainResult from './components/ChainResult';
@@ -129,11 +128,13 @@ function App() {
   const handleInitiateEdit = useCallback((funcToEdit) => {
     const originalFunction = functions.find(f => f.name === funcToEdit.name);
     setEditingFunction(originalFunction);
+    setActiveTab('create');
     window.scrollTo(0, 0);
   }, [functions]);
   
   const handleCancelEdit = useCallback(() => {
     setEditingFunction(null);
+    setActiveTab('use');
   }, []);
 
   const handleTabChange = (tab) => {
@@ -144,75 +145,56 @@ function App() {
   if (!token) {
     return (
       <div className="App">
-        <Card>
-          <Heading>Custom Calculator</Heading>
-          {authView === 'login' ? (
-            <Box mt="4">
-              <Login setToken={handleSetToken} />
-              <p>Don't have an account? <Button variant="ghost" onClick={() => setAuthView('signup')}>Signup</Button></p>
-            </Box>
-          ) : (
-            <Box mt="4">
-              <Signup />
-              <p>Already have an account? <Button variant="ghost" onClick={() => setAuthView('login')}>Login</Button></p>
-            </Box>
-          )}
-        </Card>
+        <h1>Custom Calculator</h1>
+        {authView === 'login' ? (
+          <div className="form-section">
+            <Login setToken={handleSetToken} />
+            <p>Don't have an account? <button onClick={() => setAuthView('signup')}>Signup</button></p>
+          </div>
+        ) : (
+          <div className="form-section">
+            <Signup />
+            <p>Already have an account? <button onClick={() => setAuthView('login')}>Login</button></p>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="App">
-      <Card>
-        <Flex justify="between" align="center">
-          <Heading>Custom Calculator</Heading>
-          <Button onClick={handleLogout}>Logout</Button>
-        </Flex>
-        
-        <Box mt="4">
-          <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
-            <Tabs.List>
-              <Tabs.Trigger value="use">Use Functions</Tabs.Trigger>
-              <Tabs.Trigger value="create">Create New Function</Tabs.Trigger>
-            </Tabs.List>
+      <h1>Custom Calculator</h1>
+      <button onClick={handleLogout}>Logout</button>
+      
+      <div className="tab-navigation">
+        <button className={`tab-button ${activeTab === 'use' ? 'active' : ''}`} onClick={() => handleTabChange('use')}>
+          Use Functions
+        </button>
+        <button className={`tab-button ${activeTab === 'create' ? 'active' : ''}`} onClick={() => handleTabChange('create')}>
+          {editingFunction ? 'Edit Function' : 'Create New Function'}
+        </button>
+      </div>
 
-            <Box pt="3">
-              <Tabs.Content value="use">
-                <UseFunctionForm 
-                  functions={functions.map(f => ({...f.definition, name: f.name}))} 
-                  onCalculate={handleExecution}
-                  onEdit={handleInitiateEdit}
-                  onDelete={handleDeleteFunction}
-                />
-              </Tabs.Content>
+      <div className="tab-content">
+        {activeTab === 'use' && (
+          <UseFunctionForm 
+            functions={functions.map(f => ({...f.definition, name: f.name}))} 
+            onCalculate={handleExecution}
+            onEdit={handleInitiateEdit}
+            onDelete={handleDeleteFunction}
+          />
+        )}
+        {activeTab === 'create' && (
+          <CreateFunctionForm 
+            onSaveOrUpdate={handleSaveOrUpdateFunction} 
+            editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name} : null} 
+            onCancelEdit={handleCancelEdit}
+            functions={functions.map(f => ({...f.definition, name: f.name}))}
+          />
+        )}
+      </div>
 
-              <Tabs.Content value="create">
-                <CreateFunctionForm 
-                  onSaveOrUpdate={handleSaveOrUpdateFunction} 
-                  editingFunction={null}
-                  onCancelEdit={() => setActiveTab('use')}
-                  functions={functions.map(f => ({...f.definition, name: f.name}))}
-                />
-              </Tabs.Content>
-            </Box>
-          </Tabs.Root>
-        </Box>
-
-        <ChainResult results={executionResults} />
-
-        <Dialog.Root open={!!editingFunction} onOpenChange={(isOpen) => !isOpen && setEditingFunction(null)}>
-          <Dialog.Content style={{ maxWidth: 450 }}>
-            <Dialog.Title>Edit Function</Dialog.Title>
-            <CreateFunctionForm 
-              onSaveOrUpdate={handleSaveOrUpdateFunction} 
-              editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name} : null} 
-              onCancelEdit={handleCancelEdit}
-              functions={functions.map(f => ({...f.definition, name: f.name}))}
-            />
-          </Dialog.Content>
-        </Dialog.Root>
-      </Card>
+      <ChainResult results={executionResults} />
     </div>
   );
 }

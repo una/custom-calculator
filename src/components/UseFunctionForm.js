@@ -1,68 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
+
 function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
   const [selectedFunction, setSelectedFunction] = useState(null);
   const [variableValues, setVariableValues] = useState({});
 
-  const renderFunctionList = () => {
-    const functionMap = {};
-    const childFunctionNames = new Set();
-
-    functions.forEach(func => {
-      functionMap[func.name] = { ...func, children: [] };
-    });
-
-    functions.forEach(func => {
-      if (func.type === 'nested' && func.nestedFunction && functionMap[func.nestedFunction]) {
-        // The function with 'nestedFunction' property is the parent.
-        // The function referred to by 'nestedFunction' is the child.
-        const parent = functionMap[func.name];
-        const child = functionMap[func.nestedFunction];
-        
-        // Avoid circular dependencies
-        let current = parent;
-        let isCircular = false;
-        while (current) {
-          if (current.name === child.name) {
-            isCircular = true;
-            break;
-          }
-          const nextParentFunc = functions.find(f => f.nestedFunction === current.name);
-          current = nextParentFunc ? functionMap[nextParentFunc.name] : null;
-        }
-
-        if (!isCircular) {
-          parent.children.push(child);
-          childFunctionNames.add(child.name);
-        }
-      }
-    });
-
-    const topLevelFunctions = functions.filter(func => !childFunctionNames.has(func.name));
-
-    const renderFunction = (func, level = 0) => (
-      <Box key={func.name} style={{ marginLeft: level > 0 ? '20px' : '0px', marginTop: '4px' }}>
-        <Button onClick={() => handleSelectFunction(functions.find(f => f.name === func.name))} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
-          {func.name}
-        </Button>
-        {func.children.length > 0 && (
-          <Box>
-            {func.children.map(child => renderFunction(child, level + 1))}
-          </Box>
-        )}
-      </Box>
-    );
-
-    if (functions.length === 0) {
-      return <Text>No functions created yet. Go to the "Create" tab to add one.</Text>;
-    }
-
-    return topLevelFunctions.map(f => renderFunction(functionMap[f.name]));
-  };
-
   useEffect(() => {
     if (selectedFunction) {
-      const newVariableValues = { ...variableValues };
+      const initialValues = {};
       const allVars = new Set();
 
       // Add variables from the main function
@@ -79,12 +23,10 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
       }
       
       allVars.forEach(v => {
-        if (!newVariableValues.hasOwnProperty(v)) {
-          newVariableValues[v] = '';
-        }
+        initialValues[v] = '';
       });
 
-      setVariableValues(newVariableValues);
+      setVariableValues(initialValues);
     } else {
       setVariableValues({});
     }
@@ -96,65 +38,75 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
 
   const handleSelectFunction = (func) => {
     setSelectedFunction(func);
+    onCalculate(null, null); // Clear previous results
   };
 
   const renderVariableInputs = () => {
     const varsToRender = Object.keys(variableValues);
+    
+    // Don't render the 'nestedResult' as an input field
     const filteredVars = varsToRender.filter(v => v !== 'nestedResult');
 
     return filteredVars.map(v => (
-      <label key={v}>
-        <Text as="div" size="2" mb="1" weight="bold">
-          {v}
-        </Text>
-        <TextField.Root
+      <div className="form-group" key={v}>
+        <label>{v}</label>
+        <input
           type="number"
           value={variableValues[v] || ''}
           onChange={e => setVariableValues({ ...variableValues, [v]: parseFloat(e.target.value) || 0 })}
         />
-      </label>
+      </div>
     ));
   };
 
   return (
-    <Box>
-      <Heading as="h2" size="4" mb="4">Use a Function</Heading>
+    <div className="form-section">
+      <h2>Use a Function</h2>
       
       {!selectedFunction ? (
-        <Flex direction="column" gap="2">
-          {renderFunctionList()}
-        </Flex>
+        <div className="function-list">
+          {functions.length > 0 ? (
+            functions.map(f => (
+              <button key={f.name} className="function-list-item" onClick={() => handleSelectFunction(f)}>
+                {f.name}
+                {f.type === 'nested' && <span className="chain-indicator">(Nested)</span>}
+              </button>
+            ))
+          ) : (
+            <p className="no-functions-message">No functions created yet. Go to the "Create" tab to add one.</p>
+          )}
+        </div>
       ) : (
-        <Flex direction="column" gap="3">
-          <Card>
-            <Flex justify="between" align="center">
-              <Box>
-                <Text weight="bold">{selectedFunction.name}</Text>
-              </Box>
-              <Button variant="soft" onClick={() => setSelectedFunction(null)}>Change</Button>
-            </Flex>
-            {selectedFunction.notes && (
-              <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>
-                <Text size="2" italic>{selectedFunction.notes}</Text>
-              </Box>
-            )}
-          </Card>
+        <div className="function-details">
+          <div className="selected-function-display">
+            <div className="function-list-item selected">
+              {selectedFunction.name}
+              {selectedFunction.type === 'nested' && <span className="chain-indicator">(Nested)</span>}
+            </div>
+            <button className="change-btn" onClick={() => setSelectedFunction(null)}>Change</button>
+          </div>
 
-          <Flex direction="column" gap="2">
+          {selectedFunction.notes && (
+            <div className="function-notes">
+              <p>{selectedFunction.notes}</p>
+            </div>
+          )}
+
+          <div className="variable-inputs">
             {renderVariableInputs()}
-          </Flex>
+          </div>
           
-          <Flex gap="3" mt="2">
-            <Button onClick={handleCalculate}>Calculate</Button>
-            <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
-            <Button color="red" variant="soft" onClick={() => {
+          <div className="form-actions">
+            <button onClick={handleCalculate}>Calculate</button>
+            <button className="edit-btn" onClick={() => onEdit(selectedFunction)}>Edit</button>
+            <button className="remove-btn" onClick={() => {
               onDelete(selectedFunction.name);
               setSelectedFunction(null);
-            }}>Delete</Button>
-          </Flex>
-        </Flex>
+            }}>Delete</button>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
