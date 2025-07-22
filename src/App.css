@@ -1,8 +1,6 @@
 .App {
-    width: 100%;
-    max-width: 400px;
-    margin: 2rem auto;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 380px;
+  margin: 0 auto;
+  height: 100dvh;
+  box-sizing: border-box;
 }
