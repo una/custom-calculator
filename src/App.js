@@ -1,119 +1,176 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as math from 'mathjs';
-
 import CreateFunctionForm from './components/CreateFunctionForm';
 import UseFunctionForm from './components/UseFunctionForm';
 import ChainResult from './components/ChainResult';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import './App.css';
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [functions, setFunctions] = useState([]);
   const [editingFunction, setEditingFunction] = useState(null);
   const [executionResults, setExecutionResults] = useState([]);
   const [activeTab, setActiveTab] = useState('use');
-  const isInitialMount = useRef(true);
+  const [authView, setAuthView] = useState('login');
 
-  // Load from localStorage
-  useEffect(() => {
-    const savedFunctions = localStorage.getItem('customFunctions');
-    if (savedFunctions) setFunctions(JSON.parse(savedFunctions));
-  }, []);
-
-  // Save to localStorage
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-    } else {
-      localStorage.setItem('customFunctions', JSON.stringify(functions));
+  const fetchFunctions = useCallback(async () => {
+    if (token) {
+      try {
+        const response = await fetch('/api/functions', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFunctions(data.map(f => ({ ...f, definition: JSON.parse(f.definition) })));
+        } else {
+          handleLogout();
+        }
+      } catch (error) {
+        console.error('Error fetching functions:', error);
+      }
     }
-  }, [functions]);
+  }, [token]);
 
-  // --- NEW: useEffect to clear results when switching tabs ---
   useEffect(() => {
-    // If the active tab is not the "Use" tab, clear any previous results.
-    if (activeTab !== 'use') {
-      setExecutionResults([]);
+    fetchFunctions();
+  }, [fetchFunctions]);
+
+  const handleSetToken = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setFunctions([]);
+  };
+
+  const handleSaveOrUpdateFunction = useCallback(async (funcData, isUpdating) => {
+    const endpoint = isUpdating ? `/api/functions?name=${funcData.name}` : '/api/functions';
+    const method = isUpdating ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: funcData.name, definition: funcData }),
+      });
+
+      if (response.ok) {
+        fetchFunctions();
+        setEditingFunction(null);
+        setActiveTab('use');
+      } else {
+        console.error('Failed to save function');
+      }
+    } catch (error) {
+      console.error('Error saving function:', error);
     }
-  }, [activeTab]);
+  }, [token, fetchFunctions]);
 
+  const handleDeleteFunction = useCallback(async (functionName) => {
+    try {
+      const response = await fetch(`/api/functions?name=${functionName}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        fetchFunctions();
+      } else {
+        console.error('Failed to delete function');
+      }
+    } catch (error) {
+      console.error('Error deleting function:', error);
+    }
+  }, [token, fetchFunctions]);
 
-  // --- All other handlers and logic remain the same ---
-  
   const handleExecution = useCallback((funcToRun, initialValues) => {
     if (!funcToRun || !initialValues) {
       setExecutionResults([]);
       return;
     }
     try {
-      if (funcToRun.type === 'chain') {
-        const results = [];
-        let currentScope = { ...initialValues };
-        for (const funcName of funcToRun.chain) {
-          const func = functions.find(f => f.name === funcName);
-          if (!func) throw new Error(`Chained function "${funcName}" not found.`);
-          const result = math.evaluate(func.expression, currentScope);
-          const resultKey = `resultOf${func.name.replace(/\s/g, '')}`;
-          results.push({ name: func.name, result });
-          currentScope[resultKey] = result;
-        }
-        setExecutionResults(results);
-      } else {
-        const result = math.evaluate(funcToRun.expression, initialValues);
-        setExecutionResults([{ name: funcToRun.name, result }]);
+      const { type, expression, nestedFunction } = funcToRun;
+      let currentScope = { ...initialValues };
+      let finalResult;
+      let resultsToDisplay = [];
+
+      if (type === 'nested' && nestedFunction) {
+        const funcToNest = functions.find(f => f.name === nestedFunction);
+        if (!funcToNest) throw new Error(`Nested function "${nestedFunction}" not found.`);
+        
+        // Execute the nested function first
+        const nestedResult = math.evaluate(funcToNest.definition.expression, currentScope);
+        resultsToDisplay.push({ name: funcToNest.name, result: nestedResult });
+        
+        // Add the result to the scope for the outer function
+        currentScope.nestedResult = nestedResult;
       }
+
+      // Execute the main function
+      finalResult = math.evaluate(expression, currentScope);
+      resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
+
+      setExecutionResults(resultsToDisplay);
+
     } catch (e) {
       console.error(e);
       setExecutionResults([]);
     }
   }, [functions]);
 
-  const handleSaveOrUpdateFunction = useCallback((funcData, isUpdating) => {
-    if (isUpdating) {
-      setFunctions(prev => prev.map(f => (f.name === funcData.name ? funcData : f)));
-    } else {
-      setFunctions(prev => {
-        if (prev.some(f => f.name === funcData.name)) {
-          alert("A function with this name already exists.");
-          return prev;
-        }
-        return [...prev, funcData];
-      });
-    }
-    setEditingFunction(null);
-    setActiveTab('use');
-  }, []);
-
   const handleInitiateEdit = useCallback((funcToEdit) => {
-    setEditingFunction(funcToEdit);
+    const originalFunction = functions.find(f => f.name === funcToEdit.name);
+    setEditingFunction(originalFunction);
     setActiveTab('create');
     window.scrollTo(0, 0);
-  }, []);
+  }, [functions]);
   
   const handleCancelEdit = useCallback(() => {
     setEditingFunction(null);
     setActiveTab('use');
   }, []);
 
-  const handleDeleteFunction = useCallback((functionName) => {
-    setEditingFunction(prev => (prev && prev.name === functionName ? null : prev));
-    setFunctions(prev => prev.filter(f => f.name !== functionName));
-  }, []);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setExecutionResults([]);
+  };
+
+  if (!token) {
+    return (
+      <div className="App">
+        <h1>Custom Calculator</h1>
+        {authView === 'login' ? (
+          <div className="form-section">
+            <Login setToken={handleSetToken} />
+            <p>Don't have an account? <button onClick={() => setAuthView('signup')}>Signup</button></p>
+          </div>
+        ) : (
+          <div className="form-section">
+            <Signup />
+            <p>Already have an account? <button onClick={() => setAuthView('login')}>Login</button></p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="App">
       <h1>Custom Calculator</h1>
+      <button onClick={handleLogout}>Logout</button>
       
       <div className="tab-navigation">
-        <button 
-          className={`tab-button ${activeTab === 'use' ? 'active' : ''}`}
-          onClick={() => setActiveTab('use')}
-        >
+        <button className={`tab-button ${activeTab === 'use' ? 'active' : ''}`} onClick={() => handleTabChange('use')}>
           Use Functions
         </button>
-        <button 
-          className={`tab-button ${activeTab === 'create' ? 'active' : ''}`}
-          onClick={() => setActiveTab('create')}
-        >
+        <button className={`tab-button ${activeTab === 'create' ? 'active' : ''}`} onClick={() => handleTabChange('create')}>
           {editingFunction ? 'Edit Function' : 'Create New Function'}
         </button>
       </div>
@@ -121,7 +178,7 @@ function App() {
       <div className="tab-content">
         {activeTab === 'use' && (
           <UseFunctionForm 
-            functions={functions} 
+            functions={functions.map(f => ({...f.definition, name: f.name}))} 
             onCalculate={handleExecution}
             onEdit={handleInitiateEdit}
             onDelete={handleDeleteFunction}
@@ -130,9 +187,9 @@ function App() {
         {activeTab === 'create' && (
           <CreateFunctionForm 
             onSaveOrUpdate={handleSaveOrUpdateFunction} 
-            editingFunction={editingFunction} 
+            editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name} : null} 
             onCancelEdit={handleCancelEdit}
-            functions={functions}
+            functions={functions.map(f => ({...f.definition, name: f.name}))}
           />
         )}
       </div>

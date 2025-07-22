@@ -8,27 +8,20 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   
-  // State to manage the creation type and the chain being built
+  // State to manage the creation type and the nested function
   const [functionType, setFunctionType] = useState('single');
-  const [chain, setChain] = useState([]);
+  const [nestedFunction, setNestedFunction] = useState('');
 
   // Effect to populate the form when editing a function
   useEffect(() => {
     if (editingFunction) {
-      const { name, expression, variables, notes, type, chain } = editingFunction;
+      const { name, expression, variables, notes, type, nestedFunction: nestedFunc } = editingFunction;
       setName(name);
       setNotes(notes || '');
       setFunctionType(type || 'single');
-
-      if (type === 'chain') {
-        setExpression('');
-        setVariables('');
-        setChain(chain || []);
-      } else {
-        setExpression(expression || '');
-        setVariables(variables || '');
-        setChain([]);
-      }
+      setExpression(expression || '');
+      setVariables(variables || '');
+      setNestedFunction(nestedFunc || '');
     } else {
       // Clear form when not editing
       setName('');
@@ -36,51 +29,43 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setVariables('');
       setNotes('');
       setFunctionType('single');
-      setChain([]);
+      setNestedFunction('');
     }
   }, [editingFunction]);
-
-  const handleAddToChain = (funcName) => {
-    if (funcName && !chain.includes(funcName)) {
-      setChain([...chain, funcName]);
-    }
-  };
-
-  const handleRemoveFromChain = (indexToRemove) => {
-    setChain(prev => prev.filter((_, index) => index !== indexToRemove));
-  };
   
   const handleSubmit = () => {
-    if (!name) {
-      setError('Function Name is required.');
+    if (!name || !expression || !variables) {
+      setError('Function Name, Expression, and Variables are required.');
       return;
     }
 
-    let funcData = { name, notes };
+    let funcData = { 
+      name, 
+      notes, 
+      type: functionType, 
+      expression, 
+      variables 
+    };
 
-    if (functionType === 'single') {
-      if (!expression || !variables) {
-        setError('Expression and Variables are required for a single function.');
+    if (functionType === 'nested') {
+      if (!nestedFunction) {
+        setError('You must select a function to nest.');
         return;
       }
-      funcData = { ...funcData, type: 'single', expression, variables };
-    } else { // Chained function
-      if (chain.length < 2) {
-        setError('A chained function must contain at least two steps.');
-        return;
-      }
-      funcData = { ...funcData, type: 'chain', chain };
+      funcData.nestedFunction = nestedFunction;
     }
     
     setError('');
     onSaveOrUpdate(funcData, !!editingFunction);
 
+    // Clear form if we are not editing
     if (!editingFunction) {
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
-      setChain([]);
+      setFunctionType('single');
+      setNestedFunction('');
     }
   };
 
@@ -108,48 +93,38 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           <label>Function Type</label>
           <div className="radio-group">
             <label><input type="radio" value="single" checked={functionType === 'single'} onChange={() => setFunctionType('single')} /> Single Function</label>
-            <label><input type="radio" value="chain" checked={functionType === 'chain'} onChange={() => setFunctionType('chain')} /> Chained Function</label>
+            <label><input type="radio" value="nested" checked={functionType === 'nested'} onChange={() => setFunctionType('nested')} /> Nested Function</label>
           </div>
         </div>
       )}
 
-      {/* --- UI for SINGLE functions --- */}
-      {functionType === 'single' && (
-        <>
-          <div className="form-group">
-            <label>Expression</label>
-            <input type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Variables (comma-separated)</label>
-            <input type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
-          </div>
-        </>
-      )}
-
-      {/* --- UI for CHAINED functions --- */}
-      {functionType === 'chain' && (
+      {/* --- UI for NESTED functions --- */}
+      {functionType === 'nested' && (
         <div className="form-section-inset">
-          <h4>Build Your Chain</h4>
+          <h4>Nest a Function</h4>
           <div className="form-group">
-            <label>Add a function to the chain:</label>
-            <select onChange={(e) => handleAddToChain(e.target.value)} value="">
-              <option value="">-- Select a function to add --</option>
+            <label>Select a function to nest:</label>
+            <select 
+              onChange={(e) => setNestedFunction(e.target.value)} 
+              value={nestedFunction}
+            >
+              <option value="">-- Select a function --</option>
               {availableFunctions.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
             </select>
           </div>
-          {chain.length > 0 && (
-            <ol className="calculation-chain-list">
-              {chain.map((funcName, index) => (
-                <li key={`${funcName}-${index}`}>
-                  <span>{funcName}</span>
-                  <button className="remove-btn" onClick={() => handleRemoveFromChain(index)}>Remove</button>
-                </li>
-              ))}
-            </ol>
-          )}
+          {nestedFunction && <p className="helper-text">Use <strong>nestedResult</strong> in your expression to access the result of '{nestedFunction}'.</p>}
         </div>
       )}
+
+      {/* --- Common form fields for Expression and Variables --- */}
+      <div className="form-group">
+        <label>Expression</label>
+        <input type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label>Variables (comma-separated)</label>
+        <input type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
+      </div>
       
       {error && <p className="error">{error}</p>}
       <div className="form-actions">
