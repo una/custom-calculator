@@ -67,7 +67,7 @@ button {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
-    background-color: #5c6bc0;
+    background-color: #9fa8da;
     color: white;
     font-size: 16px;
     cursor: pointer;
@@ -120,6 +120,10 @@ button:hover {
   color: white;
   padding: 4px 8px;
   font-size: 12px;
+}
+
+.remove-btn:hover {
+  background-color: #b71c1c;
 }
 
 .result-section {
@@ -243,8 +247,8 @@ button:hover {
 }
 
 .function-list-item:hover {
-  background-color: #f5f5f5;
-  border-color: #bbb;
+  background-color: #9fa8da;
+  border-color: #7986cb;
 }
 
 /* Style for the selected function in the list */
@@ -288,18 +292,20 @@ button:hover {
   background-color: transparent;
   font-size: 16px;
   font-weight: 600;
-  color: #5f6368;
+  color: #555555;
   border-bottom: 3px solid transparent;
   margin-bottom: -2px; /* Overlap the container's border */
   transition: color 0.2s, border-color 0.2s;
 }
 
 .tab-button:hover {
-  color: #3f51b5;
+  background-color: #3f51b5;
+  color: white;
 }
 
 .tab-button.active {
-  color: #3f51b5;
+  background-color: #3f51b5;
+  color: white;
   border-bottom-color: #3f51b5;
 }
 
@@ -334,5 +340,15 @@ button:hover {
 }
 
 .change-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #bdbdbd;
+}
+
+.cancel-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.cancel-btn:hover {
+  background-color: #bdbdbd;
 }
