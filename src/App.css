@@ -3,4 +3,9 @@
   margin: 0 auto;
   height: 100dvh;
   box-sizing: border-box;
+  font-size: 18px;
+}
+
+.rt-TextFieldInput {
+  font-size: 18px;
 }
