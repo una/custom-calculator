@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { Button, TextField, TextArea, Select, RadioGroup, Box, Flex, Text, Heading } from '@radix-ui/themes';
 function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions }) {
   // State for the form fields
   const [name, setName] = useState('');
@@ -73,65 +73,85 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   const availableFunctions = functions.filter(f => f.type !== 'chain');
 
   return (
-    <div className="form-section">
-      <h2>{editingFunction ? 'Edit Function' : 'Create New Function'}</h2>
+    <Box>
+      <Flex direction="column" gap="3">
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Function Name
+          </Text>
+          <TextField.Root
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            readOnly={!!editingFunction}
+          />
+          {editingFunction && <Text as="div" size="1" mt="1">The function name cannot be changed.</Text>}
+        </label>
+
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Notes (Optional)
+          </Text>
+          <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+        </label>
+
+        {!editingFunction && (
+          <RadioGroup.Root value={functionType} onValueChange={setFunctionType}>
+            <Flex gap="2" align="center">
+              <Text as="label" size="2">
+                <Flex gap="2" align="center">
+                  <RadioGroup.Item value="single" /> Single Function
+                </Flex>
+              </Text>
+              <Text as="label" size="2">
+                <Flex gap="2" align="center">
+                  <RadioGroup.Item value="nested" /> Nested Function
+                </Flex>
+              </Text>
+            </Flex>
+          </RadioGroup.Root>
+        )}
+
+        {functionType === 'nested' && (
+          <Box p="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
+            <Heading as="h3" size="3" mb="2">Nest a Function</Heading>
+            <label>
+              <Text as="div" size="2" mb="1" weight="bold">
+                Select a function to nest:
+              </Text>
+              <Select.Root onValueChange={setNestedFunction} value={nestedFunction}>
+                <Select.Trigger placeholder="-- Select a function --" />
+                <Select.Content>
+                  {availableFunctions.map(f => <Select.Item key={f.name} value={f.name}>{f.name}</Select.Item>)}
+                </Select.Content>
+              </Select.Root>
+            </label>
+            {nestedFunction && <Text as="p" size="2" mt="2">Use <strong>nestedResult</strong> in your expression to access the result of '{nestedFunction}'.</Text>}
+          </Box>
+        )}
+
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Expression
+          </Text>
+          <TextField.Root type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
+        </label>
+
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Variables (comma-separated)
+          </Text>
+          <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
+        </label>
+      </Flex>
       
-      {/* Function Name and Notes are common to both types */}
-      <div className="form-group">
-        <label>Function Name</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} readOnly={!!editingFunction} />
-        {editingFunction && <small>The function name cannot be changed.</small>}
-      </div>
-      <div className="form-group">
-        <label>Notes (Optional)</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows="3"></textarea>
-      </div>
-
-      {/* --- Type Selector --- */}
-      {!editingFunction && (
-        <div className="form-group">
-          <label>Function Type</label>
-          <div className="radio-group">
-            <label><input type="radio" value="single" checked={functionType === 'single'} onChange={() => setFunctionType('single')} /> Single Function</label>
-            <label><input type="radio" value="nested" checked={functionType === 'nested'} onChange={() => setFunctionType('nested')} /> Nested Function</label>
-          </div>
-        </div>
-      )}
-
-      {/* --- UI for NESTED functions --- */}
-      {functionType === 'nested' && (
-        <div className="form-section-inset">
-          <h4>Nest a Function</h4>
-          <div className="form-group">
-            <label>Select a function to nest:</label>
-            <select 
-              onChange={(e) => setNestedFunction(e.target.value)} 
-              value={nestedFunction}
-            >
-              <option value="">-- Select a function --</option>
-              {availableFunctions.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
-            </select>
-          </div>
-          {nestedFunction && <p className="helper-text">Use <strong>nestedResult</strong> in your expression to access the result of '{nestedFunction}'.</p>}
-        </div>
-      )}
-
-      {/* --- Common form fields for Expression and Variables --- */}
-      <div className="form-group">
-        <label>Expression</label>
-        <input type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label>Variables (comma-separated)</label>
-        <input type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
-      </div>
+      {error && <Text color="red" size="2" mt="2">{error}</Text>}
       
-      {error && <p className="error">{error}</p>}
-      <div className="form-actions">
-        <button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</button>
-        {editingFunction && <button className="cancel-btn" onClick={onCancelEdit}>Cancel Edit</button>}
-      </div>
-    </div>
+      <Flex gap="3" mt="4">
+        <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
+        {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel Edit</Button>}
+      </Flex>
+    </Box>
   );
 }
 
