@@ -13,30 +13,15 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     });
 
     functions.forEach(func => {
-      if (func.type === 'nested' && func.nestedFunction && functionMap[func.nestedFunction]) {
-        // The function with 'nestedFunction' property is the parent.
-        // The function referred to by 'nestedFunction' is the child.
-        const parent = functionMap[func.name];
-        const child = functionMap[func.nestedFunction];
-        
-        // Avoid circular dependencies
-        let current = parent;
-        let isCircular = false;
-        const findNextParent = (currentName) => functions.find(f => f.nestedFunction === currentName);
-
-        while (current) {
-          if (current.name === child.name) {
-            isCircular = true;
-            break;
+      if (func.nestedFunctions && func.nestedFunctions.length > 0) {
+        func.nestedFunctions.forEach(nestedFuncName => {
+          if (functionMap[nestedFuncName]) {
+            const parent = functionMap[func.name];
+            const child = functionMap[nestedFuncName];
+            parent.children.push(child);
+            childFunctionNames.add(child.name);
           }
-          const nextParentFunc = findNextParent(current.name);
-          current = nextParentFunc ? functionMap[nextParentFunc.name] : null;
-        }
-
-        if (!isCircular) {
-          parent.children.push(child);
-          childFunctionNames.add(child.name);
-        }
+        });
       }
     });
 
@@ -156,6 +141,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
           
           <Flex gap="3" mt="2">
             <Button onClick={handleCalculate}>Calculate</Button>
+            <Button variant="soft" onClick={() => setSelectedFunction(null)}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
             <Button variant="outline" color="red" onClick={handleDelete}>Delete</Button>
           </Flex>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, TextArea, Select, RadioGroup, Box, Flex, Text, Heading } from '@radix-ui/themes';
+import { Button, TextField, TextArea, Box, Flex, Text, Heading } from '@radix-ui/themes';
+import Select from 'react-select';
 function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete }) {
   // State for the form fields
   const [name, setName] = useState('');
@@ -8,30 +9,38 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   
-  // State to manage the creation type and the nested function
-  const [functionType, setFunctionType] = useState('single');
-  const [nestedFunction, setNestedFunction] = useState('');
+  // State to manage the nested functions
+  const [nestedFunctions, setNestedFunctions] = useState([]);
 
   // Effect to populate the form when editing a function
   useEffect(() => {
     if (editingFunction) {
-      const { name, expression, variables, notes, type, nestedFunction: nestedFunc } = editingFunction;
+      const { name, expression, variables, notes, nestedFunctions: nestedFuncs } = editingFunction;
       setName(name);
       setNotes(notes || '');
-      setFunctionType(type || 'single');
       setExpression(expression || '');
       setVariables(variables || '');
-      setNestedFunction(nestedFunc || '');
+      setNestedFunctions(nestedFuncs || []);
     } else {
       // Clear form when not editing
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
-      setFunctionType('single');
-      setNestedFunction('');
+      setNestedFunctions([]);
     }
   }, [editingFunction]);
+
+  // Effect to auto-populate variables from nested functions
+  useEffect(() => {
+    const allVars = new Set();
+    nestedFunctions.forEach(func => {
+      if (func && func.variables) {
+        func.variables.split(',').forEach(v => allVars.add(v.trim()));
+      }
+    });
+    setVariables(Array.from(allVars).join(', '));
+  }, [nestedFunctions]);
   
   const handleSubmit = () => {
     if (!name || !expression || !variables) {
@@ -42,18 +51,10 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
     let funcData = { 
       name, 
       notes, 
-      type: functionType, 
       expression, 
-      variables 
+      variables,
+      nestedFunctions
     };
-
-    if (functionType === 'nested') {
-      if (!nestedFunction) {
-        setError('You must select a function to nest.');
-        return;
-      }
-      funcData.nestedFunction = nestedFunction;
-    }
     
     setError('');
     onSaveOrUpdate(funcData, !!editingFunction);
@@ -64,8 +65,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setExpression('');
       setVariables('');
       setNotes('');
-      setFunctionType('single');
-      setNestedFunction('');
+      setNestedFunctions([]);
     }
   };
 
@@ -77,7 +77,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       <Flex direction="column" gap="3">
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Function Name
+            Function Name*
           </Text>
           <TextField.Root
             type="text"
@@ -88,60 +88,40 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           {editingFunction && <Text as="div" size="1" mt="1">The function name cannot be changed.</Text>}
         </label>
 
-        <label>
+        <Box p="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
+          <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Notes (Optional)
+            Nest Functions (optional)
           </Text>
-          <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-        </label>
-
-        {!editingFunction && (
-          <RadioGroup.Root value={functionType} onValueChange={setFunctionType}>
-            <Flex gap="2" align="center">
-              <Text as="label" size="2">
-                <Flex gap="2" align="center">
-                  <RadioGroup.Item value="single" /> Single Function
-                </Flex>
-              </Text>
-              <Text as="label" size="2">
-                <Flex gap="2" align="center">
-                  <RadioGroup.Item value="nested" /> Nested Function
-                </Flex>
-              </Text>
-            </Flex>
-          </RadioGroup.Root>
-        )}
-
-        {functionType === 'nested' && (
-          <Box p="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
-            <Heading as="h3" size="3" mb="2">Nest a Function</Heading>
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Select a function to nest:
-              </Text>
-              <Select.Root onValueChange={setNestedFunction} value={nestedFunction}>
-                <Select.Trigger placeholder="-- Select a function --" />
-                <Select.Content>
-                  {availableFunctions.map(f => <Select.Item key={f.name} value={f.name}>{f.name}</Select.Item>)}
-                </Select.Content>
-              </Select.Root>
-            </label>
-            {nestedFunction && <Text as="p" size="2" mt="2">Use <strong>nestedResult</strong> in your expression to access the result of '{nestedFunction}'.</Text>}
-          </Box>
-        )}
+          </label>
+          <Select
+            isMulti
+            options={availableFunctions.map(f => ({ value: f.name, label: `${f.name} (${f.variables})`, variables: f.variables }))}
+            onChange={(selectedOptions) => setNestedFunctions(selectedOptions || [])}
+            value={nestedFunctions}
+          />
+          {nestedFunctions.length > 0 && <Text as="p" size="2" mt="2">Use <strong>{`{functionName}`}</strong> in your expression to access the result of a nested function. For example, to use the result of "{nestedFunctions[0].value}", you would use <strong>{`{${nestedFunctions[0].value}}`}</strong>.</Text>}
+        </Box>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Expression
+            Expression*
           </Text>
-          <TextField.Root type="text" value={expression} onChange={(e) => setExpression(e.target.value)} />
+          <TextArea type="text" value={expression} onChange={(e) => setExpression(e.target.value)} rows={2}/>
         </label>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Variables (comma-separated)
+            Variables (comma-separated)*
           </Text>
           <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
+        </label>
+
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Note (Optional)
+          </Text>
+          <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
         </label>
       </Flex>
       
