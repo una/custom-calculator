@@ -25,7 +25,7 @@ const authenticateToken = (handler) => async (req, res) => {
 
 async function functionsHandler(req, res) {
   const { userId } = req.user;
-  const { name: functionName } = req.query;
+  const { name: functionName, id: functionId } = req.query;
 
   if (req.method === 'GET') {
     try {
@@ -67,7 +67,7 @@ async function functionsHandler(req, res) {
     }
   } else if (req.method === 'DELETE') {
     try {
-      await pool.query('DELETE FROM custom_functions WHERE user_id = $1 AND name = $2', [userId, functionName]);
+      await pool.query('DELETE FROM custom_functions WHERE user_id = $1 AND id = $2', [userId, functionId]);
       res.status(204).end();
     } catch (error) {
       console.error('Error deleting function:', error);

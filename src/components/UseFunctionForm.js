@@ -22,12 +22,14 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
         // Avoid circular dependencies
         let current = parent;
         let isCircular = false;
+        const findNextParent = (currentName) => functions.find(f => f.nestedFunction === currentName);
+
         while (current) {
           if (current.name === child.name) {
             isCircular = true;
             break;
           }
-          const nextParentFunc = functions.find(f => f.nestedFunction === current.name);
+          const nextParentFunc = findNextParent(current.name);
           current = nextParentFunc ? functionMap[nextParentFunc.name] : null;
         }
 
@@ -88,10 +90,18 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     } else {
       setVariableValues({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFunction, functions]);
 
   const handleCalculate = () => {
     onCalculate(selectedFunction, variableValues);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedFunction.name}?`)) {
+      onDelete(selectedFunction.id);
+      setSelectedFunction(null);
+    }
   };
 
   const handleSelectFunction = (func) => {
@@ -147,10 +157,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
           <Flex gap="3" mt="2">
             <Button onClick={handleCalculate}>Calculate</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
-            <Button color="red" variant="soft" onClick={() => {
-              onDelete(selectedFunction.name);
-              setSelectedFunction(null);
-            }}>Delete</Button>
+            <Button variant="outline" color="red" onClick={handleDelete}>Delete</Button>
           </Flex>
         </Flex>
       )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, TextArea, Select, RadioGroup, Box, Flex, Text, Heading } from '@radix-ui/themes';
-function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions }) {
+function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete }) {
   // State for the form fields
   const [name, setName] = useState('');
   const [expression, setExpression] = useState('');
@@ -149,7 +149,8 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       
       <Flex gap="3" mt="4">
         <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
-        {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel Edit</Button>}
+        {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel</Button>}
+        {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(name)}>Delete</Button>}
       </Flex>
     </Box>
   );

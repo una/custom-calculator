@@ -75,14 +75,15 @@ function App() {
     }
   }, [token, fetchFunctions]);
 
-  const handleDeleteFunction = useCallback(async (functionName) => {
+  const handleDeleteFunction = useCallback(async (functionId) => {
     try {
-      const response = await fetch(`/api/functions?name=${functionName}`, {
+      const response = await fetch(`/api/functions?id=${functionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
         fetchFunctions();
+        setEditingFunction(null); // Close the dialog
       } else {
         console.error('Failed to delete function');
       }
@@ -180,7 +181,7 @@ function App() {
             <Box pt="3">
               <Tabs.Content value="use">
                 <UseFunctionForm 
-                  functions={functions.map(f => ({...f.definition, name: f.name}))} 
+                  functions={functions.map(f => ({...f.definition, name: f.name, id: f.id}))} 
                   onCalculate={handleExecution}
                   onEdit={handleInitiateEdit}
                   onDelete={handleDeleteFunction}
@@ -209,6 +210,7 @@ function App() {
               editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name} : null} 
               onCancelEdit={handleCancelEdit}
               functions={functions.map(f => ({...f.definition, name: f.name}))}
+              onDelete={handleDeleteFunction}
             />
           </Dialog.Content>
         </Dialog.Root>
