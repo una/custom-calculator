@@ -5,78 +5,49 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
   const [variableValues, setVariableValues] = useState({});
 
   const renderFunctionList = () => {
-    const functionMap = {};
-    const childFunctionNames = new Set();
-
-    functions.forEach(func => {
-      functionMap[func.name] = { ...func, children: [] };
-    });
-
-    functions.forEach(func => {
-      if (func.nestedFunctions && func.nestedFunctions.length > 0) {
-        func.nestedFunctions.forEach(nestedFuncName => {
-          if (functionMap[nestedFuncName]) {
-            const parent = functionMap[func.name];
-            const child = functionMap[nestedFuncName];
-            parent.children.push(child);
-            childFunctionNames.add(child.name);
-          }
-        });
-      }
-    });
-
-    const topLevelFunctions = functions.filter(func => !childFunctionNames.has(func.name));
-
-    const renderFunction = (func, level = 0) => (
-      <Box key={func.name} style={{ marginLeft: level > 0 ? '20px' : '0px', marginTop: '4px' }}>
-        <Button onClick={() => handleSelectFunction(functions.find(f => f.name === func.name))} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
-          {func.name}
-        </Button>
-        {func.children.length > 0 && (
-          <Box>
-            {func.children.map(child => renderFunction(child, level + 1))}
-          </Box>
-        )}
-      </Box>
-    );
-
     if (functions.length === 0) {
       return <Text>No functions created yet. Go to the "Create" tab to add one.</Text>;
     }
 
-    return topLevelFunctions.map(f => renderFunction(functionMap[f.name]));
+    return functions.map(func => (
+      <Box key={func.name} style={{ marginTop: '4px' }}>
+        <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
+          {func.name}
+        </Button>
+      </Box>
+    ));
   };
 
   useEffect(() => {
     if (selectedFunction) {
-      const newVariableValues = { ...variableValues };
+      const newVariableValues = {};
       const allVars = new Set();
-
+  
       // Add variables from the main function
       if (selectedFunction.variables) {
         selectedFunction.variables.split(',').forEach(v => allVars.add(v.trim()));
       }
-
-      // If it's a nested function, add variables from the nested function
-      if (selectedFunction.type === 'nested' && selectedFunction.nestedFunction) {
-        const nestedFunc = functions.find(f => f.name === selectedFunction.nestedFunction);
-        if (nestedFunc && nestedFunc.variables) {
-          nestedFunc.variables.split(',').forEach(v => allVars.add(v.trim()));
-        }
+  
+      // Add variables from sub-functions
+      if (selectedFunction.subFunctions) {
+        selectedFunction.subFunctions.forEach(sf => {
+          if (sf.variables) {
+            sf.variables.split(',').forEach(v => allVars.add(v.trim()));
+          }
+        });
       }
       
       allVars.forEach(v => {
-        if (!newVariableValues.hasOwnProperty(v)) {
+        if (v) { // Ensure not to add empty strings as variables
           newVariableValues[v] = '';
         }
       });
-
+  
       setVariableValues(newVariableValues);
     } else {
       setVariableValues({});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFunction, functions]);
+  }, [selectedFunction]);
 
   const handleCalculate = () => {
     onCalculate(selectedFunction, variableValues);

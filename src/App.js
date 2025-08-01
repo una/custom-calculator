@@ -80,12 +80,10 @@ function App() {
   const handleSaveOrUpdateFunction = useCallback(async (funcData, isUpdating) => {
     const endpoint = isUpdating ? `/api/functions?name=${funcData.name}` : '/api/functions';
     const method = isUpdating ? 'PUT' : 'POST';
-
-    const definition = {
-      ...funcData,
-      nestedFunctions: funcData.nestedFunctions.map(f => f.value),
-    };
-
+  
+    // The funcData now includes subFunctions
+    const definition = { ...funcData };
+  
     try {
       const response = await fetch(endpoint, {
         method,
@@ -95,36 +93,9 @@ function App() {
         },
         body: JSON.stringify({ name: funcData.name, definition }),
       });
-
+  
       if (response.ok) {
         await fetchFunctions();
-        if (isUpdating) {
-          // After updating a function, find any parent functions and update their variables
-          const parentFunctions = functions.filter(f => f.definition.nestedFunctions && f.definition.nestedFunctions.includes(funcData.name));
-          for (const parentFunc of parentFunctions) {
-            const nestedFuncs = parentFunc.definition.nestedFunctions;
-            const allVars = new Set();
-            nestedFuncs.forEach(nestedFuncName => {
-              const func = functions.find(f => f.name === nestedFuncName);
-              // get the updated function definition
-              const updatedFunc = funcData.name === nestedFuncName ? definition : func.definition;
-              if (updatedFunc && updatedFunc.variables) {
-                updatedFunc.variables.split(',').forEach(v => allVars.add(v.trim()));
-              }
-            });
-            const newVars = Array.from(allVars).join(', ');
-            const updatedParentDef = { ...parentFunc.definition, variables: newVars };
-            await fetch(`/api/functions?name=${parentFunc.name}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({ name: parentFunc.name, definition: updatedParentDef }),
-            });
-          }
-        }
-        fetchFunctions();
         setEditingFunction(null);
         setActiveTab('use');
         setSuccessMessage(`Function "${funcData.name}" has been ${isUpdating ? 'updated' : 'created'} successfully.`);
@@ -134,7 +105,7 @@ function App() {
     } catch (error) {
       console.error('Error saving function:', error);
     }
-  }, [token, fetchFunctions, functions]);
+  }, [token, fetchFunctions]);
 
   const handleDeleteFunction = useCallback(async (functionId) => {
     try {
@@ -159,86 +130,52 @@ function App() {
       return;
     }
     try {
-      const { nestedFunctions, expression } = funcToRun;
+      const { subFunctions, expression } = funcToRun;
       let currentScope = { ...initialValues };
       let resultsToDisplay = [];
       let processedExpression = expression;
-
-      const allNestedFunctions = [];
-      if (funcToRun.nestedFunction) {
-        allNestedFunctions.push(funcToRun.nestedFunction);
-      }
-      if (nestedFunctions) {
-        allNestedFunctions.push(...nestedFunctions.map(f => typeof f === 'object' ? f.value : f));
-      }
-
-      if (allNestedFunctions.length > 0) {
-        const allVars = new Set(funcToRun.variables.split(',').map(v => v.trim()));
-        
-        allNestedFunctions.forEach(nestedFuncName => {
-          const funcToNest = functions.find(f => f.name === nestedFuncName);
-          if (!funcToNest) throw new Error(`Nested function "${nestedFuncName}" not found.`);
-          
-          if (funcToNest.definition.variables) {
-            funcToNest.definition.variables.split(',').forEach(v => allVars.add(v.trim()));
-          }
-        });
-
-        allVars.forEach(v => {
-          if (initialValues.hasOwnProperty(v)) {
-            currentScope[v] = initialValues[v];
-          }
-        });
-
-        allNestedFunctions.forEach(nestedFuncName => {
-          const funcToNest = functions.find(f => f.name === nestedFuncName);
-          if (!funcToNest) throw new Error(`Nested function "${nestedFuncName}" not found.`);
-          
-          const nestedScope = {};
-          if (funcToNest.definition.variables) {
-            const nestedVars = funcToNest.definition.variables.split(',').map(v => v.trim());
-            nestedVars.forEach(v => {
+  
+      if (subFunctions && subFunctions.length > 0) {
+        subFunctions.forEach(subFunc => {
+          const subFuncScope = {};
+          if (subFunc.variables) {
+            const subFuncVars = subFunc.variables.split(',').map(v => v.trim());
+            subFuncVars.forEach(v => {
               if (currentScope.hasOwnProperty(v)) {
-                nestedScope[v] = currentScope[v];
+                subFuncScope[v] = currentScope[v];
               }
             });
           }
-
-          const nestedResult = evaluateWithHyphens(funcToNest.definition.expression, nestedScope);
-          resultsToDisplay.push({ name: funcToNest.name, result: nestedResult });
           
-          // Add the result to the scope for the outer function
-          currentScope[nestedFuncName] = nestedResult;
-          if (funcToRun.nestedFunction === nestedFuncName) {
-            currentScope.nestedResult = nestedResult;
-          }
+          const subFuncResult = evaluateWithHyphens(subFunc.expression, subFuncScope);
+          resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
           
-          // Replace the placeholder in the expression
-          const placeholder = `{${nestedFuncName}}`;
-          processedExpression = processedExpression.split(placeholder).join(nestedResult);
+          // Add sub-function result to the main scope
+          currentScope[subFunc.name] = subFuncResult;
+          
+          // Replace placeholder in the main expression
+          const placeholder = `{${subFunc.name}}`;
+          processedExpression = processedExpression.split(placeholder).join(subFuncResult);
         });
       }
-
+  
       // Execute the main function
       const finalResult = evaluateWithHyphens(processedExpression, currentScope);
       resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
-
+  
       setExecutionResults(resultsToDisplay);
-
+  
     } catch (e) {
       console.error(e);
       setExecutionResults([]);
     }
-  }, [functions]);
+  }, []);
 
   const handleInitiateEdit = useCallback((funcToEdit) => {
     const originalFunction = functions.find(f => f.name === funcToEdit.name);
     if (originalFunction) {
-      const nestedFunctionsWithOptions = (originalFunction.definition.nestedFunctions || []).map(name => {
-        const func = functions.find(f => f.name === name);
-        return { value: name, label: `${name} (${func.definition.variables})`, variables: func.definition.variables };
-      });
-      setEditingFunction({ ...originalFunction, definition: { ...originalFunction.definition, nestedFunctions: nestedFunctionsWithOptions }});
+      // The subFunctions are now part of the definition, so we can pass them directly
+      setEditingFunction({ ...originalFunction, definition: { ...originalFunction.definition }});
     }
     window.scrollTo(0, 0);
   }, [functions]);

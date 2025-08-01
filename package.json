@@ -19,9 +19,11 @@
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
     "react-select": "^5.10.2",
+    "vercel": "^44.6.6",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "dev": "vercel dev",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

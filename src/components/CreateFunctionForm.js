@@ -1,76 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, TextArea, Box, Flex, Text, Heading } from '@radix-ui/themes';
-import Select from 'react-select';
+import { Button, TextField, TextArea, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
+
 function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete }) {
-  // State for the form fields
   const [name, setName] = useState('');
   const [expression, setExpression] = useState('');
   const [variables, setVariables] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   
-  // State to manage the nested functions
-  const [nestedFunctions, setNestedFunctions] = useState([]);
+  const [subFunctions, setSubFunctions] = useState([]);
 
-  // Effect to populate the form when editing a function
   useEffect(() => {
     if (editingFunction) {
-      const { name, expression, variables, notes, nestedFunctions: nestedFuncs } = editingFunction;
+      const { name, expression, variables, notes, subFunctions: subFuncs } = editingFunction;
       setName(name);
       setNotes(notes || '');
       setExpression(expression || '');
       setVariables(variables || '');
-      setNestedFunctions(nestedFuncs || []);
+      setSubFunctions((subFuncs || []).map(sf => ({ ...sf, id: Date.now() + Math.random() })));
     } else {
-      // Clear form when not editing
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
-      setNestedFunctions([]);
+      setSubFunctions([]);
     }
   }, [editingFunction]);
 
-  // Effect to auto-populate variables from nested functions
-  useEffect(() => {
-    const allVars = new Set();
-    nestedFunctions.forEach(func => {
-      if (func && func.variables) {
-        func.variables.split(',').forEach(v => allVars.add(v.trim()));
-      }
-    });
-    setVariables(Array.from(allVars).join(', '));
-  }, [nestedFunctions]);
-  
+  const handleAddSubFunction = () => {
+    setSubFunctions([...subFunctions, { id: Date.now(), name: '', expression: '', variables: '' }]);
+  };
+
+  const handleRemoveSubFunction = (id) => {
+    setSubFunctions(subFunctions.filter(sf => sf.id !== id));
+  };
+
+  const handleSubFunctionChange = (id, field, value) => {
+    setSubFunctions(subFunctions.map(sf => sf.id === id ? { ...sf, [field]: value } : sf));
+  };
+
   const handleSubmit = () => {
     if (!name || !expression || !variables) {
       setError('Function Name, Expression, and Variables are required.');
       return;
     }
 
-    let funcData = { 
+    const funcData = { 
       name, 
       notes, 
       expression, 
       variables,
-      nestedFunctions
+      subFunctions: subFunctions.map(({ id, ...rest }) => rest) // Remove temporary id
     };
     
     setError('');
     onSaveOrUpdate(funcData, !!editingFunction);
 
-    // Clear form if we are not editing
     if (!editingFunction) {
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
-      setNestedFunctions([]);
+      setSubFunctions([]);
     }
   };
-
-  // Filter out chained functions from the dropdown to prevent nesting chains
-  const availableFunctions = functions.filter(f => f.type !== 'chain');
 
   return (
     <Box>
@@ -88,31 +81,32 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           {editingFunction && <Text as="div" size="1" mt="1">The function name cannot be changed.</Text>}
         </label>
 
-        <Box p="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
-          <label>
-          <Text as="div" size="2" mb="1" weight="bold">
-            Nest Functions (optional)
-          </Text>
-          </label>
-          <Select
-            isMulti
-            options={availableFunctions.map(f => ({ value: f.name, label: `${f.name} (${f.variables})`, variables: f.variables }))}
-            onChange={(selectedOptions) => setNestedFunctions(selectedOptions || [])}
-            value={nestedFunctions}
-          />
-          {nestedFunctions.length > 0 && <Text as="p" size="2" mt="2">Use <strong>{`{functionName}`}</strong> in your expression to access the result of a nested function. For example, to use the result of "{nestedFunctions[0].value}", you would use <strong>{`{${nestedFunctions[0].value}}`}</strong>.</Text>}
-        </Box>
+        <Card>
+          <Heading as="h3" size="3" mb="2">Sub-functions (optional)</Heading>
+          <Text as="p" size="2" mb="3">Define helper functions that can be used in your main expression. Use <strong>{`{subFunctionName}`}</strong> to access their results.</Text>
+          {subFunctions.map((sf, index) => (
+            <Box key={sf.id} p="3" mb="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
+              <Flex direction="column" gap="2">
+                <TextField.Root placeholder="Sub-function Name" value={sf.name} onChange={e => handleSubFunctionChange(sf.id, 'name', e.target.value)} />
+                <TextArea placeholder="Sub-function Expression" value={sf.expression} onChange={e => handleSubFunctionChange(sf.id, 'expression', e.target.value)} />
+                <TextField.Root placeholder="Sub-function Variables (comma-separated)" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
+                <Button size="1" color="red" variant="soft" onClick={() => handleRemoveSubFunction(sf.id)} style={{ alignSelf: 'flex-end' }}>Remove</Button>
+              </Flex>
+            </Box>
+          ))}
+          <Button variant="soft" onClick={handleAddSubFunction}>+ Add Sub-function</Button>
+        </Card>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Expression*
+            Main Expression*
           </Text>
           <TextArea type="text" value={expression} onChange={(e) => setExpression(e.target.value)} rows={2}/>
         </label>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Variables (comma-separated)*
+            Main Variables (comma-separated)*
           </Text>
           <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
         </label>
