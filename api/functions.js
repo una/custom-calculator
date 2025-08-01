@@ -51,14 +51,14 @@ async function functionsHandler(req, res) {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   } else if (req.method === 'PUT') {
-    const { definition } = req.body;
-    if (!definition) {
-      return res.status(400).json({ message: 'Definition is required.' });
+    const { name, definition } = req.body;
+    if (!definition || !name) {
+      return res.status(400).json({ message: 'Name and definition are required.' });
     }
     try {
       const result = await pool.query(
-        'UPDATE custom_functions SET definition = $1 WHERE user_id = $2 AND name = $3 RETURNING *',
-        [JSON.stringify(definition), userId, functionName]
+        'UPDATE custom_functions SET name = $1, definition = $2 WHERE user_id = $3 AND id = $4 RETURNING *',
+        [name, JSON.stringify(definition), userId, functionId]
       );
       res.status(200).json(result.rows[0]);
     } catch (error) {

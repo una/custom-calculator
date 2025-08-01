@@ -117,10 +117,6 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               <Box>
                 <Text weight="bold">{selectedFunction.name}</Text>
               </Box>
-              <Button variant="soft" onClick={() => {
-                setSelectedFunction(null);
-                setExecutionResults([]);
-              }}>Change</Button>
             </Flex>
             {selectedFunction.notes && (
               <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>
@@ -140,7 +136,6 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               setExecutionResults([]);
             }}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
-            <Button variant="outline" color="red" onClick={handleDelete}>Delete</Button>
           </Flex>
         </Flex>
       )}

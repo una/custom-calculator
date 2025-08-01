@@ -78,7 +78,7 @@ function App() {
   };
 
   const handleSaveOrUpdateFunction = useCallback(async (funcData, isUpdating) => {
-    const endpoint = isUpdating ? `/api/functions?name=${funcData.name}` : '/api/functions';
+    const endpoint = isUpdating ? `/api/functions?id=${funcData.id}` : '/api/functions';
     const method = isUpdating ? 'PUT' : 'POST';
   
     // The funcData now includes subFunctions
@@ -281,7 +281,7 @@ function App() {
             <Dialog.Title>Edit Function</Dialog.Title>
             <CreateFunctionForm 
               onSaveOrUpdate={handleSaveOrUpdateFunction} 
-              editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name} : null} 
+              editingFunction={editingFunction ? {...editingFunction.definition, name: editingFunction.name, id: editingFunction.id} : null} 
               onCancelEdit={handleCancelEdit}
               functions={functions.map(f => ({...f.definition, name: f.name}))}
               onDelete={handleDeleteFunction}

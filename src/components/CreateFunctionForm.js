@@ -50,7 +50,8 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       notes, 
       expression, 
       variables,
-      subFunctions: subFunctions.map(({ id, ...rest }) => rest) // Remove temporary id
+      subFunctions: subFunctions.map(({ id, ...rest }) => rest), // Remove temporary id
+      id: editingFunction ? editingFunction.id : undefined
     };
     
     setError('');
@@ -76,9 +77,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            readOnly={!!editingFunction}
           />
-          {editingFunction && <Text as="div" size="1" mt="1">The function name cannot be changed.</Text>}
         </label>
 
         <Card>
@@ -124,7 +123,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       <Flex gap="3" mt="4">
         <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
         {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel</Button>}
-        {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(name)}>Delete</Button>}
+        {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}>Delete</Button>}
       </Flex>
     </Box>
   );
