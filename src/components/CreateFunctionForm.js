@@ -82,16 +82,16 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Main Expression*
+            Main Variables (comma-separated)*
           </Text>
-          <TextArea type="text" value={expression} onChange={(e) => setExpression(e.target.value)} rows={2}/>
+          <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
         </label>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Main Variables (comma-separated)*
+            Main Expression*
           </Text>
-          <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
+          <TextField.Root type="text" value={expression} onChange={(e) => setExpression(e.target.value)} rows={2}/>
         </label>
 
         <Card>
@@ -112,9 +112,9 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Note (Optional)
+            Note
           </Text>
-          <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+          <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder='Optional note' />
         </label>
       </Flex>
       
