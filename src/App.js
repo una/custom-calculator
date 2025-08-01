@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as math from 'mathjs';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Heading, Button, Flex, Box, Tabs, Dialog, Text } from '@radix-ui/themes';
 import CreateFunctionForm from './components/CreateFunctionForm';
 import UseFunctionForm from './components/UseFunctionForm';
@@ -212,71 +213,93 @@ function App() {
   if (!token) {
     return (
       <div className="App">
-        <Card>
-          <Heading>Custom Calculator</Heading>
-          {authView === 'login' ? (
-            <Box mt="4">
-              <Login setToken={handleSetToken} />
-              <p>Don't have an account? <Button variant="ghost" onClick={() => setAuthView('signup')}>Signup</Button></p>
-            </Box>
-          ) : (
-            <Box mt="4">
-              <Signup />
-              <p>Already have an account? <Button variant="ghost" onClick={() => setAuthView('login')}>Login</Button></p>
-            </Box>
-          )}
-        </Card>
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
+          <Card>
+            <Heading>Custom Calculator</Heading>
+            {authView === 'login' ? (
+              <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <Box mt="4">
+                  <Login setToken={handleSetToken} />
+                  <p>Don't have an account? <Button variant="ghost" onClick={() => setAuthView('signup')}>Signup</Button></p>
+                </Box>
+              </motion.div>
+            ) : (
+              <motion.div key="signup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <Box mt="4">
+                  <Signup />
+                  <p>Already have an account? <Button variant="ghost" onClick={() => setAuthView('login')}>Login</Button></p>
+                </Box>
+              </motion.div>
+            )}
+          </Card>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="App">
-      <Card>
-        <Flex justify="between" align="center">
-          <Heading>Custom Calculator</Heading>
-          <Button onClick={handleLogout}>Logout</Button>
-        </Flex>
-        
-        <Box mt="4">
-          <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
-            <Tabs.List>
-              <Tabs.Trigger value="use">🧮 Calculate</Tabs.Trigger>
-              <Tabs.Trigger value="create">➕ Create New Function</Tabs.Trigger>
-            </Tabs.List>
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
+        <Card>
+          <Flex justify="between" align="center">
+            <Heading>Custom Calculator</Heading>
+            <Button onClick={handleLogout}>Logout</Button>
+          </Flex>
+          
+          <Box mt="4">
+            <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
+              <Tabs.List>
+                <Tabs.Trigger value="use">🧮 Calculate</Tabs.Trigger>
+                <Tabs.Trigger value="create">➕ Create New Function</Tabs.Trigger>
+              </Tabs.List>
 
-            <Box pt="3">
-              <Tabs.Content value="use">
-                <UseFunctionForm 
-                  functions={functions.map(f => ({...f.definition, name: f.name, id: f.id}))} 
-                  onCalculate={handleExecution}
-                  onEdit={handleInitiateEdit}
-                  onDelete={handleDeleteFunction}
-                  setExecutionResults={setExecutionResults}
-                />
-              </Tabs.Content>
-
-              <Tabs.Content value="create">
-                <CreateFunctionForm 
-                  onSaveOrUpdate={handleSaveOrUpdateFunction} 
-                  editingFunction={null}
-                  onCancelEdit={() => setActiveTab('use')}
-                  functions={functions.map(f => ({...f.definition, name: f.name}))}
-                />
-              </Tabs.Content>
-            </Box>
-          </Tabs.Root>
-        </Box>
-
-        {successMessage && (
-          <Box mt="4" p="3" style={{ background: 'var(--green-a2)', borderRadius: 'var(--radius-3)' }}>
-            <Text color="green">{successMessage}</Text>
+              <Box pt="3">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, x: activeTab === 'use' ? -20 : 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: activeTab === 'use' ? 20 : -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {activeTab === 'use' && (
+                      <Tabs.Content value="use">
+                        <UseFunctionForm 
+                          functions={functions.map(f => ({...f.definition, name: f.name, id: f.id}))} 
+                          onCalculate={handleExecution}
+                          onEdit={handleInitiateEdit}
+                          onDelete={handleDeleteFunction}
+                          setExecutionResults={setExecutionResults}
+                        />
+                      </Tabs.Content>
+                    )}
+                    {activeTab === 'create' && (
+                      <Tabs.Content value="create">
+                        <CreateFunctionForm 
+                          onSaveOrUpdate={handleSaveOrUpdateFunction} 
+                          editingFunction={null}
+                          onCancelEdit={() => setActiveTab('use')}
+                          functions={functions.map(f => ({...f.definition, name: f.name}))}
+                        />
+                      </Tabs.Content>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </Box>
+            </Tabs.Root>
           </Box>
-        )}
 
-        <ChainResult results={executionResults} />
+          {successMessage && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
+              <Box mt="4" p="3" style={{ background: 'var(--green-a2)', borderRadius: 'var(--radius-3)' }}>
+                <Text color="green">{successMessage}</Text>
+              </Box>
+            </motion.div>
+          )}
 
-        <Dialog.Root open={!!editingFunction} onOpenChange={(isOpen) => !isOpen && setEditingFunction(null)}>
+          <ChainResult results={executionResults} />
+
+          <Dialog.Root open={!!editingFunction} onOpenChange={(isOpen) => !isOpen && setEditingFunction(null)}>
           <Dialog.Content style={{ maxWidth: 450 }}>
             <Dialog.Title>Edit Function</Dialog.Title>
             <CreateFunctionForm 
@@ -288,7 +311,8 @@ function App() {
             />
           </Dialog.Content>
         </Dialog.Root>
-      </Card>
+        </Card>
+      </motion.div>
     </div>
   );
 }
