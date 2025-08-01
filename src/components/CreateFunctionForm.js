@@ -51,7 +51,8 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       expression, 
       variables,
       subFunctions: subFunctions.map(({ id, ...rest }) => rest), // Remove temporary id
-      id: editingFunction ? editingFunction.id : undefined
+      id: editingFunction ? editingFunction.id : undefined,
+      settings: editingFunction?.settings || { decimalPlaces: 4, tags: [] }
     };
     
     setError('');

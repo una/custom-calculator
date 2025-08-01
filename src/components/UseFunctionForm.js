@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
 import * as math from 'mathjs';
+import FunctionSettingsDialog from './FunctionSettingsDialog';
 
-function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults }) {
+function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction }) {
   const [selectedFunction, setSelectedFunction] = useState(null);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [variableValues, setVariableValues] = useState({});
 
   const renderFunctionList = () => {
@@ -71,6 +73,11 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     onCalculate(selectedFunction, variableValues);
   };
 
+  const handleSaveSettings = (updatedFunction) => {
+    onUpdateFunction(updatedFunction);
+    setSelectedFunction(updatedFunction);
+  };
+
   const handleSelectFunction = (func) => {
     setSelectedFunction(func);
     setExecutionResults([]);
@@ -128,8 +135,17 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               setExecutionResults([]);
             }}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
+            <Button variant="outline" onClick={() => setSettingsOpen(true)}>Settings</Button>
           </Flex>
         </Flex>
+      )}
+      {selectedFunction && (
+        <FunctionSettingsDialog
+          open={isSettingsOpen}
+          onOpenChange={setSettingsOpen}
+          onSave={handleSaveSettings}
+          func={selectedFunction}
+        />
       )}
     </Box>
   );

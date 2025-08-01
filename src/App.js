@@ -63,7 +63,7 @@ function App() {
     const endpoint = isUpdating ? `/api/functions?id=${funcData.id}` : '/api/functions';
     const method = isUpdating ? 'PUT' : 'POST';
   
-    // The funcData now includes subFunctions
+    // The funcData now includes subFunctions and settings
     const definition = { ...funcData };
   
     try {
@@ -116,6 +116,7 @@ function App() {
       let currentScope = { ...initialValues };
       let resultsToDisplay = [];
       let processedExpression = expression;
+      const { settings } = funcToRun;
   
       if (subFunctions && subFunctions.length > 0) {
         const subFuncMap = new Map(subFunctions.map(sf => [sf.name, sf]));
@@ -156,14 +157,22 @@ function App() {
             }
           });
 
-          const subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
+          let subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
+          const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
+          if (typeof subFuncResult === 'number') {
+            subFuncResult = parseFloat(subFuncResult.toFixed(decimalPlaces));
+          }
           resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });
       }
   
-      const finalResult = math.evaluate(processedExpression, currentScope);
+      let finalResult = math.evaluate(processedExpression, currentScope);
+      const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
+      if (typeof finalResult === 'number') {
+        finalResult = parseFloat(finalResult.toFixed(decimalPlaces));
+      }
       resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
       setExecutionResults(resultsToDisplay);
   
@@ -235,6 +244,7 @@ function App() {
                   onEdit={handleInitiateEdit}
                   onDelete={handleDeleteFunction}
                   setExecutionResults={setExecutionResults}
+                  onUpdateFunction={(updatedFunc) => handleSaveOrUpdateFunction(updatedFunc, true)}
                 />
               </Tabs.Content>
 
