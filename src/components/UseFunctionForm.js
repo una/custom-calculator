@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, TextField, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
 import * as math from 'mathjs';
+
+const listVariants = {
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 },
+};
 
 function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults }) {
   const [selectedFunction, setSelectedFunction] = useState(null);
@@ -12,11 +26,13 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     }
 
     return functions.map(func => (
-      <Box key={func.name} style={{ marginTop: '4px' }}>
-        <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
-          {func.name}
-        </Button>
-      </Box>
+      <motion.div key={func.name} variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <Box style={{ marginTop: '4px' }}>
+          <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
+            {func.name}
+          </Button>
+        </Box>
+      </motion.div>
     ));
   };
 
@@ -106,39 +122,57 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     <Box>
       <Heading as="h2" size="4" mb="4">Use a Function</Heading>
       
-      {!selectedFunction ? (
-        <Flex direction="column" gap="2">
-          {renderFunctionList()}
-        </Flex>
-      ) : (
-        <Flex direction="column" gap="3">
-          <Card>
-            <Flex justify="between" align="center">
-              <Box>
-                <Text weight="bold">{selectedFunction.name}</Text>
-              </Box>
+      <AnimatePresence mode="wait">
+        {!selectedFunction ? (
+          <motion.div
+            key="function-list"
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0 }}
+            variants={listVariants}
+          >
+            <Flex direction="column" gap="2">
+              {renderFunctionList()}
             </Flex>
-            {selectedFunction.notes && (
-              <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>
-                <Text size="2" italic>{selectedFunction.notes}</Text>
-              </Box>
-            )}
-          </Card>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="function-form"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Flex direction="column" gap="3">
+              <Card>
+                <Flex justify="between" align="center">
+                  <Box>
+                    <Text weight="bold">{selectedFunction.name}</Text>
+                  </Box>
+                </Flex>
+                {selectedFunction.notes && (
+                  <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>
+                    <Text size="2" italic>{selectedFunction.notes}</Text>
+                  </Box>
+                )}
+              </Card>
 
-          <Flex direction="column" gap="2">
-            {renderVariableInputs()}
-          </Flex>
-          
-          <Flex gap="3" mt="2">
-            <Button onClick={handleCalculate}>Calculate</Button>
-            <Button variant="soft" onClick={() => {
-              setSelectedFunction(null);
-              setExecutionResults([]);
-            }}>Cancel</Button>
-            <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
-          </Flex>
-        </Flex>
-      )}
+              <Flex direction="column" gap="2">
+                {renderVariableInputs()}
+              </Flex>
+              
+              <Flex gap="3" mt="2">
+                <Button onClick={handleCalculate}>Calculate</Button>
+                <Button variant="soft" onClick={() => {
+                  setSelectedFunction(null);
+                  setExecutionResults([]);
+                }}>Cancel</Button>
+                <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
+                <Button color="red" variant="outline" onClick={handleDelete}>Delete</Button>
+              </Flex>
+            </Flex>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }
