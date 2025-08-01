@@ -43,7 +43,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       allExpressions.forEach(expr => {
           if (!expr) return;
           try {
-              let sanitizedExpr = expr.replace(/\{(.+?)\}/g, '1');
+              let sanitizedExpr = expr.replace(/\{([\w\s]+?)\}/g, '1');
               const node = math.parse(sanitizedExpr);
               node.traverse(function (n) {
                   if (n.isSymbolNode && !mathjsKeywords.has(n.name)) {

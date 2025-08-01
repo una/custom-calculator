@@ -8,24 +8,6 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import './App.css';
 
-const evaluateWithHyphens = (expression, scope) => {
-  const sanitizedScope = {};
-  for (const key in scope) {
-    sanitizedScope[key.replace(/-/g, '_')] = scope[key];
-  }
-
-  // Protect subtraction operator by replacing it with a unique placeholder
-  const protectedExpression = expression.replace(/\s-\s/g, ' __SUBTRACT__ ');
-
-  // Now, replace all remaining hyphens (which should only be in variable names)
-  const sanitizedExpression = protectedExpression.replace(/-/g, '_');
-
-  // Restore the subtraction operator
-  const finalExpression = sanitizedExpression.replace(/__SUBTRACT__/g, '-');
-
-  return math.evaluate(finalExpression, sanitizedScope);
-};
-
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [functions, setFunctions] = useState([]);
@@ -149,7 +131,7 @@ function App() {
           visiting.add(name);
           
           const subFunc = subFuncMap.get(name);
-          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{([\w\s]+?)\}/g) || [])
             .map(m => m.slice(1, -1));
             
           dependencies.forEach(dep => visit(dep));
@@ -165,7 +147,7 @@ function App() {
           let subFuncProcessedExpression = subFunc.expression;
           
           // Replace placeholders with results from other sub-functions
-          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{([\w\s]+?)\}/g) || [])
             .map(m => m.slice(1, -1));
           
           dependencies.forEach(depName => {
@@ -174,14 +156,14 @@ function App() {
             }
           });
 
-          const subFuncResult = evaluateWithHyphens(subFuncProcessedExpression, currentScope);
+          const subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
           resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });
       }
   
-      const finalResult = evaluateWithHyphens(processedExpression, currentScope);
+      const finalResult = math.evaluate(processedExpression, currentScope);
       resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
       setExecutionResults(resultsToDisplay);
   
