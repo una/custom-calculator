@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
-function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
+import * as math from 'mathjs';
+
+function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults }) {
   const [selectedFunction, setSelectedFunction] = useState(null);
   const [variableValues, setVariableValues] = useState({});
 
@@ -22,23 +24,39 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     if (selectedFunction) {
       const newVariableValues = {};
       const allVars = new Set();
+      const mathjsKeywords = new Set(Object.keys(math));
   
-      // Add variables from the main function
+      // Collect explicitly defined variables
       if (selectedFunction.variables) {
-        selectedFunction.variables.split(',').forEach(v => allVars.add(v.trim()));
+        selectedFunction.variables.split(',').forEach(v => v && allVars.add(v.trim()));
       }
-  
-      // Add variables from sub-functions
-      if (selectedFunction.subFunctions) {
-        selectedFunction.subFunctions.forEach(sf => {
-          if (sf.variables) {
-            sf.variables.split(',').forEach(v => allVars.add(v.trim()));
+      selectedFunction.subFunctions?.forEach(sf => {
+        if (sf.variables) {
+          sf.variables.split(',').forEach(v => v && allVars.add(v.trim()));
+        }
+      });
+
+      // Collect variables from expressions
+      const allExpressions = [selectedFunction.expression];
+      selectedFunction.subFunctions?.forEach(sf => allExpressions.push(sf.expression));
+
+      allExpressions.forEach(expr => {
+          if (!expr) return;
+          try {
+              let sanitizedExpr = expr.replace(/\{(.+?)\}/g, '1');
+              const node = math.parse(sanitizedExpr);
+              node.traverse(function (n) {
+                  if (n.isSymbolNode && !mathjsKeywords.has(n.name)) {
+                      allVars.add(n.name);
+                  }
+              });
+          } catch (e) {
+              console.warn(`Expression parsing error in UseFunctionForm: ${e.message}`);
           }
-        });
-      }
+      });
       
       allVars.forEach(v => {
-        if (v) { // Ensure not to add empty strings as variables
+        if (v) {
           newVariableValues[v] = '';
         }
       });
@@ -57,11 +75,13 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
     if (window.confirm(`Are you sure you want to delete ${selectedFunction.name}?`)) {
       onDelete(selectedFunction.id);
       setSelectedFunction(null);
+      setExecutionResults([]);
     }
   };
 
   const handleSelectFunction = (func) => {
     setSelectedFunction(func);
+    setExecutionResults([]);
   };
 
   const renderVariableInputs = () => {
@@ -97,7 +117,10 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
               <Box>
                 <Text weight="bold">{selectedFunction.name}</Text>
               </Box>
-              <Button variant="soft" onClick={() => setSelectedFunction(null)}>Change</Button>
+              <Button variant="soft" onClick={() => {
+                setSelectedFunction(null);
+                setExecutionResults([]);
+              }}>Change</Button>
             </Flex>
             {selectedFunction.notes && (
               <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>
@@ -112,7 +135,10 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete }) {
           
           <Flex gap="3" mt="2">
             <Button onClick={handleCalculate}>Calculate</Button>
-            <Button variant="soft" onClick={() => setSelectedFunction(null)}>Cancel</Button>
+            <Button variant="soft" onClick={() => {
+              setSelectedFunction(null);
+              setExecutionResults([]);
+            }}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
             <Button variant="outline" color="red" onClick={handleDelete}>Delete</Button>
           </Flex>

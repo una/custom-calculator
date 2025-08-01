@@ -136,38 +136,58 @@ function App() {
       let processedExpression = expression;
   
       if (subFunctions && subFunctions.length > 0) {
-        subFunctions.forEach(subFunc => {
-          const subFuncScope = {};
-          if (subFunc.variables) {
-            const subFuncVars = subFunc.variables.split(',').map(v => v.trim());
-            subFuncVars.forEach(v => {
-              if (currentScope.hasOwnProperty(v)) {
-                subFuncScope[v] = currentScope[v];
-              }
-            });
-          }
+        const subFuncMap = new Map(subFunctions.map(sf => [sf.name, sf]));
+        const executionOrder = [];
+        const visited = new Set();
+        const visiting = new Set();
+  
+        function visit(name) {
+          if (!subFuncMap.has(name)) return;
+          if (visited.has(name)) return;
+          if (visiting.has(name)) throw new Error(`Circular dependency detected in sub-functions involving "${name}"`);
           
-          const subFuncResult = evaluateWithHyphens(subFunc.expression, subFuncScope);
+          visiting.add(name);
+          
+          const subFunc = subFuncMap.get(name);
+          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+            .map(m => m.slice(1, -1));
+            
+          dependencies.forEach(dep => visit(dep));
+          
+          visiting.delete(name);
+          visited.add(name);
+          executionOrder.push(subFunc);
+        }
+  
+        subFunctions.forEach(sf => visit(sf.name));
+  
+        executionOrder.forEach(subFunc => {
+          let subFuncProcessedExpression = subFunc.expression;
+          
+          // Replace placeholders with results from other sub-functions
+          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+            .map(m => m.slice(1, -1));
+          
+          dependencies.forEach(depName => {
+            if (currentScope.hasOwnProperty(depName)) {
+              subFuncProcessedExpression = subFuncProcessedExpression.split(`{${depName}}`).join(currentScope[depName]);
+            }
+          });
+
+          const subFuncResult = evaluateWithHyphens(subFuncProcessedExpression, currentScope);
           resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
-          
-          // Add sub-function result to the main scope
           currentScope[subFunc.name] = subFuncResult;
-          
-          // Replace placeholder in the main expression
-          const placeholder = `{${subFunc.name}}`;
-          processedExpression = processedExpression.split(placeholder).join(subFuncResult);
+          processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });
       }
   
-      // Execute the main function
       const finalResult = evaluateWithHyphens(processedExpression, currentScope);
       resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
-  
       setExecutionResults(resultsToDisplay);
   
     } catch (e) {
       console.error(e);
-      setExecutionResults([]);
+      setExecutionResults([{ name: 'Error', result: e.message }]);
     }
   }, []);
 
@@ -232,6 +252,7 @@ function App() {
                   onCalculate={handleExecution}
                   onEdit={handleInitiateEdit}
                   onDelete={handleDeleteFunction}
+                  setExecutionResults={setExecutionResults}
                 />
               </Tabs.Content>
 
