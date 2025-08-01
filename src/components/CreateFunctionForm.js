@@ -80,22 +80,6 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           />
         </label>
 
-        <Card>
-          <Heading as="h3" size="3" mb="2">Sub-functions (optional)</Heading>
-          <Text as="p" size="2" mb="3">Define helper functions that can be used in your main expression. Use <strong>{`{subFunctionName}`}</strong> to access their results.</Text>
-          {subFunctions.map((sf, index) => (
-            <Box key={sf.id} p="3" mb="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
-              <Flex direction="column" gap="2">
-                <TextField.Root placeholder="Sub-function Name" value={sf.name} onChange={e => handleSubFunctionChange(sf.id, 'name', e.target.value)} />
-                <TextArea placeholder="Sub-function Expression" value={sf.expression} onChange={e => handleSubFunctionChange(sf.id, 'expression', e.target.value)} />
-                <TextField.Root placeholder="Sub-function Variables (optional, comma-separated)" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
-                <Button size="1" color="red" variant="soft" onClick={() => handleRemoveSubFunction(sf.id)} style={{ alignSelf: 'flex-end' }}>Remove</Button>
-              </Flex>
-            </Box>
-          ))}
-          <Button variant="soft" onClick={handleAddSubFunction}>+ Add Sub-function</Button>
-        </Card>
-
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
             Main Expression*
@@ -109,6 +93,22 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           </Text>
           <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
         </label>
+
+        <Card>
+          <Heading as="h3" size="3" mb="2">Sub-functions (optional)</Heading>
+          <Text as="p" size="2" mb="3">Define helper functions that can be used in your main expression. Use <strong>{`{subFunctionName}`}</strong> to access their results.</Text>
+          {subFunctions.map((sf, index) => (
+            <Box key={sf.id} p="3" mb="3" style={{ background: 'var(--gray-a2)', borderRadius: 'var(--radius-3)' }}>
+              <Flex direction="column" gap="2">
+                <TextField.Root placeholder="Name" value={sf.name} onChange={e => handleSubFunctionChange(sf.id, 'name', e.target.value)} />
+                <TextField.Root placeholder="Expression" value={sf.expression} onChange={e => handleSubFunctionChange(sf.id, 'expression', e.target.value)} />
+                <TextField.Root placeholder="Variables (optional, comma-separated)" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
+                <Button size="1" color="red" variant="soft" onClick={() => handleRemoveSubFunction(sf.id)} style={{ alignSelf: 'flex-end' }}>Remove</Button>
+              </Flex>
+            </Box>
+          ))}
+          <Button variant="soft" onClick={handleAddSubFunction}>+ Add Sub-function</Button>
+        </Card>
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">

@@ -71,14 +71,6 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     onCalculate(selectedFunction, variableValues);
   };
 
-  const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedFunction.name}?`)) {
-      onDelete(selectedFunction.id);
-      setSelectedFunction(null);
-      setExecutionResults([]);
-    }
-  };
-
   const handleSelectFunction = (func) => {
     setSelectedFunction(func);
     setExecutionResults([]);
