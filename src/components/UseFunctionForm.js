@@ -3,8 +3,7 @@ import { Button, TextField, Box, Flex, Text, Heading, Card, Badge } from '@radix
 import * as math from 'mathjs';
 import FunctionSettingsDialog from './FunctionSettingsDialog';
 
-function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction, allTags = [] }) {
-  const [selectedFunction, setSelectedFunction] = useState(null);
+function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction, allTags = [], selectedFunction, setSelectedFunction }) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [variableValues, setVariableValues] = useState({});
   const [selectedTag, setSelectedTag] = useState(null);
@@ -52,19 +51,30 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       const allExpressions = [selectedFunction.expression];
       selectedFunction.subFunctions?.forEach(sf => allExpressions.push(sf.expression));
 
+      const variableRegex = /@[\w-]+/g;
       allExpressions.forEach(expr => {
-          if (!expr) return;
-          try {
-              let sanitizedExpr = expr.replace(/\{([\w\s]+?)\}/g, '1');
-              const node = math.parse(sanitizedExpr);
-              node.traverse(function (n) {
-                  if (n.isSymbolNode && !mathjsKeywords.has(n.name)) {
-                      allVars.add(n.name);
-                  }
-              });
-          } catch (e) {
-              console.warn(`Expression parsing error in UseFunctionForm: ${e.message}`);
-          }
+        if (!expr) return;
+        
+        // Extract variables starting with @
+        const matches = expr.match(variableRegex);
+        if (matches) {
+          matches.forEach(match => allVars.add(match));
+        }
+
+        // Sanitize for math.js parsing
+        let sanitizedExpr = expr.replace(/\{(.+?)\}/g, '1');
+        sanitizedExpr = sanitizedExpr.replace(variableRegex, '1');
+
+        try {
+            const node = math.parse(sanitizedExpr);
+            node.traverse(function (n) {
+                if (n.isSymbolNode && !mathjsKeywords.has(n.name)) {
+                    allVars.add(n.name);
+                }
+            });
+        } catch (e) {
+            console.warn(`Expression parsing error in UseFunctionForm: ${e.message}`);
+        }
       });
       
       allVars.forEach(v => {
@@ -176,6 +186,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
           onOpenChange={setSettingsOpen}
           onSave={handleSaveSettings}
           func={selectedFunction}
+          allTags={allTags}
         />
       )}
     </Box>

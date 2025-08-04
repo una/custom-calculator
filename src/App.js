@@ -16,6 +16,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('use');
   const [authView, setAuthView] = useState('login');
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedFunction, setSelectedFunction] = useState(null);
 
   const allTags = [...new Set(functions.flatMap(f => f.definition.settings?.tags || []))];
 
@@ -134,7 +135,7 @@ function App() {
           visiting.add(name);
           
           const subFunc = subFuncMap.get(name);
-          const dependencies = (subFunc.expression.match(/\{([\w\s]+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
             .map(m => m.slice(1, -1));
             
           dependencies.forEach(dep => visit(dep));
@@ -150,7 +151,7 @@ function App() {
           let subFuncProcessedExpression = subFunc.expression;
           
           // Replace placeholders with results from other sub-functions
-          const dependencies = (subFunc.expression.match(/\{([\w\s]+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
             .map(m => m.slice(1, -1));
           
           dependencies.forEach(depName => {
@@ -158,6 +159,15 @@ function App() {
               subFuncProcessedExpression = subFuncProcessedExpression.split(`{${depName}}`).join(currentScope[depName]);
             }
           });
+
+          // Manually replace variables that start with @
+          for (const key in currentScope) {
+            if (key.startsWith('@')) {
+              const value = currentScope[key];
+              const regex = new RegExp(`\\${key}`, 'g');
+              subFuncProcessedExpression = subFuncProcessedExpression.replace(regex, value);
+            }
+          }
 
           let subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
           const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
@@ -168,6 +178,15 @@ function App() {
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });
+      }
+      
+      // Manually replace variables that start with @
+      for (const key in currentScope) {
+        if (key.startsWith('@')) {
+          const value = currentScope[key];
+          const regex = new RegExp(`\\${key}`, 'g');
+          processedExpression = processedExpression.replace(regex, value);
+        }
       }
   
       let finalResult = math.evaluate(processedExpression, currentScope);
@@ -192,6 +211,19 @@ function App() {
     }
     window.scrollTo(0, 0);
   }, [functions]);
+
+  const handleOpenSettingsFromEdit = () => {
+    // This is a bit of a hack to open the settings dialog
+    // It might be better to refactor this to have a single settings dialog
+    // that can be opened from either the "use" or "edit" screen
+    const useFunctionForm = document.querySelector('#use-function-form');
+    if (useFunctionForm) {
+      const settingsButton = useFunctionForm.querySelector('button[aria-label="Settings"]');
+      if (settingsButton) {
+        settingsButton.click();
+      }
+    }
+  };
   
   const handleCancelEdit = useCallback(() => {
     setEditingFunction(null);
@@ -199,7 +231,17 @@ function App() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setExecutionResults([]);
+    if (tab === 'use') {
+      setSelectedFunction(null);
+      setExecutionResults([]);
+    }
+  };
+
+  const handleCalculateTabClick = () => {
+    if (activeTab === 'use') {
+      setSelectedFunction(null);
+      setExecutionResults([]);
+    }
   };
 
   if (!token) {
@@ -234,20 +276,22 @@ function App() {
         <Box mt="4">
           <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
             <Tabs.List>
-              <Tabs.Trigger value="use">🧮 Calculate</Tabs.Trigger>
+              <Tabs.Trigger value="use" onClick={handleCalculateTabClick}>🧮 Calculate</Tabs.Trigger>
               <Tabs.Trigger value="create">➕ Create New Function</Tabs.Trigger>
             </Tabs.List>
 
             <Box pt="3">
               <Tabs.Content value="use">
-                <UseFunctionForm 
-                  functions={functions.map(f => ({...f.definition, name: f.name, id: f.id}))} 
+                <UseFunctionForm
+                  functions={functions.map(f => ({...f.definition, name: f.name, id: f.id}))}
                   onCalculate={handleExecution}
                   onEdit={handleInitiateEdit}
                   onDelete={handleDeleteFunction}
                   setExecutionResults={setExecutionResults}
                   onUpdateFunction={(updatedFunc) => handleSaveOrUpdateFunction(updatedFunc, true)}
                   allTags={allTags}
+                  selectedFunction={selectedFunction}
+                  setSelectedFunction={setSelectedFunction}
                 />
               </Tabs.Content>
 
@@ -282,6 +326,7 @@ function App() {
               functions={functions.map(f => ({...f.definition, name: f.name}))}
               onDelete={handleDeleteFunction}
               allTags={allTags}
+              onOpenSettings={handleOpenSettingsFromEdit}
             />
           </Dialog.Content>
         </Dialog.Root>

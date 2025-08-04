@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, TextArea, Box, Flex, Text, Heading, Card, Badge } from '@radix-ui/themes';
 
-function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete, allTags = [] }) {
+function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete, allTags = [], onOpenSettings }) {
   const [name, setName] = useState('');
   const [expression, setExpression] = useState('');
   const [variables, setVariables] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
   
   const [subFunctions, setSubFunctions] = useState([]);
 
@@ -20,14 +18,12 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setExpression(expression || '');
       setVariables(variables || '');
       setSubFunctions((subFuncs || []).map(sf => ({ ...sf, id: Date.now() + Math.random() })));
-      setTags(settings?.tags || []);
     } else {
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
       setSubFunctions([]);
-      setTags([]);
     }
   }, [editingFunction]);
 
@@ -56,7 +52,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       variables,
       subFunctions: subFunctions.map(({ id, ...rest }) => rest), // Remove temporary id
       id: editingFunction ? editingFunction.id : undefined,
-      settings: { ...editingFunction?.settings, tags }
+      settings: { ...editingFunction?.settings }
     };
     
     setError('');
@@ -68,31 +64,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setVariables('');
       setNotes('');
       setSubFunctions([]);
-      setTags([]);
-      setTagInput('');
     }
-  };
-
-  const handleAddTag = (tag) => {
-    if (tag && !tags.includes(tag)) {
-      setTags([...tags, tag]);
-      setTagInput('');
-    }
-  };
-
-  const handleTagInputChange = (e) => {
-    setTagInput(e.target.value);
-  };
-
-  const handleTagInputKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag(tagInput);
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   return (
@@ -145,34 +117,6 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           </Text>
           <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder='Optional note' />
         </label>
-
-        <Box>
-          <Text as="div" size="2" mb="1" weight="bold">Tags</Text>
-          <Flex gap="2" align="center">
-            <TextField.Root
-              type="text"
-              value={tagInput}
-              onChange={handleTagInputChange}
-              onKeyDown={handleTagInputKeyDown}
-              placeholder="Add a tag"
-            />
-            <Button onClick={() => handleAddTag(tagInput)}>Add</Button>
-          </Flex>
-          <Flex gap="2" mt="2" wrap="wrap">
-            {tags.map(tag => (
-              <Badge key={tag} variant="soft" color="gray" style={{ cursor: 'pointer' }} onClick={() => handleRemoveTag(tag)}>
-                {tag} &times;
-              </Badge>
-            ))}
-          </Flex>
-          <Flex gap="2" mt="2" wrap="wrap">
-            {allTags.filter(t => !tags.includes(t)).map(tag => (
-              <Button key={tag} variant="soft" size="1" onClick={() => handleAddTag(tag)}>
-                + {tag}
-              </Button>
-            ))}
-          </Flex>
-        </Box>
       </Flex>
       
       {error && <Text color="red" size="2" mt="2">{error}</Text>}
@@ -181,6 +125,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
         <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
         {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel</Button>}
         {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}>Delete</Button>}
+        {editingFunction && <Button variant="outline" onClick={onOpenSettings}>Settings</Button>}
       </Flex>
     </Box>
   );
