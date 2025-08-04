@@ -1,22 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
+import { Button, TextField, Box, Flex, Text, Heading, Card, Badge } from '@radix-ui/themes';
 import * as math from 'mathjs';
 import FunctionSettingsDialog from './FunctionSettingsDialog';
 
-function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction }) {
+function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction, allTags = [] }) {
   const [selectedFunction, setSelectedFunction] = useState(null);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [variableValues, setVariableValues] = useState({});
+  const [selectedTag, setSelectedTag] = useState(null);
+
+  const filteredFunctions = selectedTag
+    ? functions.filter(f => f.settings?.tags?.includes(selectedTag))
+    : functions;
 
   const renderFunctionList = () => {
-    if (functions.length === 0) {
-      return <Text>No functions created yet. Go to the "Create" tab to add one.</Text>;
+    if (filteredFunctions.length === 0) {
+      return <Text>No functions found with the selected tag.</Text>;
     }
 
-    return functions.map(func => (
+    return filteredFunctions.map(func => (
       <Box key={func.name} style={{ marginTop: '4px' }}>
-        <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'flex-start' }}>
-          {func.name}
+        <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Text>{func.name}</Text>
+          <Flex gap="2">
+            {func.settings?.tags?.map(tag => (
+              <Badge key={tag} color="gray">{tag}</Badge>
+            ))}
+          </Flex>
         </Button>
       </Box>
     ));
@@ -106,9 +116,25 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       <Heading as="h2" size="4" mb="4">Use a Function</Heading>
       
       {!selectedFunction ? (
-        <Flex direction="column" gap="2">
-          {renderFunctionList()}
-        </Flex>
+        <>
+          <Flex gap="2" mb="4" wrap="wrap">
+            {allTags.map(tag => (
+              <Button
+                key={tag}
+                variant={selectedTag === tag ? 'solid' : 'soft'}
+                onClick={() => setSelectedTag(tag)}
+              >
+                {tag}
+              </Button>
+            ))}
+            {selectedTag && (
+              <Button variant="ghost" onClick={() => setSelectedTag(null)}>Clear</Button>
+            )}
+          </Flex>
+          <Flex direction="column" gap="2">
+            {renderFunctionList()}
+          </Flex>
+        </>
       ) : (
         <Flex direction="column" gap="3">
           <Card>
@@ -116,6 +142,11 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               <Box>
                 <Text weight="bold">{selectedFunction.name}</Text>
               </Box>
+              <Flex gap="2">
+                {selectedFunction.settings?.tags?.map(tag => (
+                  <Badge key={tag} color="gray">{tag}</Badge>
+                ))}
+              </Flex>
             </Flex>
             {selectedFunction.notes && (
               <Box mt="2" p="2" style={{ background: 'var(--yellow-a2)', borderRadius: 'var(--radius-2)'}}>

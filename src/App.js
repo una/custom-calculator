@@ -17,6 +17,8 @@ function App() {
   const [authView, setAuthView] = useState('login');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const allTags = [...new Set(functions.flatMap(f => f.definition.settings?.tags || []))];
+
   const fetchFunctions = useCallback(async () => {
     if (token) {
       try {
@@ -245,6 +247,7 @@ function App() {
                   onDelete={handleDeleteFunction}
                   setExecutionResults={setExecutionResults}
                   onUpdateFunction={(updatedFunc) => handleSaveOrUpdateFunction(updatedFunc, true)}
+                  allTags={allTags}
                 />
               </Tabs.Content>
 
@@ -254,6 +257,7 @@ function App() {
                   editingFunction={null}
                   onCancelEdit={() => setActiveTab('use')}
                   functions={functions.map(f => ({...f.definition, name: f.name}))}
+                  allTags={allTags}
                 />
               </Tabs.Content>
             </Box>
@@ -277,6 +281,7 @@ function App() {
               onCancelEdit={handleCancelEdit}
               functions={functions.map(f => ({...f.definition, name: f.name}))}
               onDelete={handleDeleteFunction}
+              allTags={allTags}
             />
           </Dialog.Content>
         </Dialog.Root>
