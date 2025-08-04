@@ -276,8 +276,8 @@ function App() {
         <Box mt="4">
           <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
             <Tabs.List>
-              <Tabs.Trigger value="use" onClick={handleCalculateTabClick}>🧮 Calculate</Tabs.Trigger>
-              <Tabs.Trigger value="create">➕ Create New Function</Tabs.Trigger>
+              <Tabs.Trigger value="use" onClick={handleCalculateTabClick}><span className="material-symbols-outlined">calculate</span> Calculate</Tabs.Trigger>
+              <Tabs.Trigger value="create"><span className="material-symbols-outlined">add</span> Create New Function</Tabs.Trigger>
             </Tabs.List>
 
             <Box pt="3">

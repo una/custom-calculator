@@ -98,10 +98,10 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, func, allTags = []
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
             <Button variant="soft" color="gray">
-              Cancel
+              <span className="material-symbols-outlined">cancel</span> Cancel
             </Button>
           </Dialog.Close>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave}><span className="material-symbols-outlined">save</span> Save</Button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

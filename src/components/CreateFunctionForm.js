@@ -108,7 +108,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
               </Flex>
             </Box>
           ))}
-          <Button variant="soft" onClick={handleAddSubFunction}>+ Add Sub-function</Button>
+          <Button variant="soft" onClick={handleAddSubFunction}><span className="material-symbols-outlined">add</span> Add Sub-function</Button>
         </Card>
 
         <label>
@@ -123,9 +123,9 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       
       <Flex gap="3" mt="4">
         <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
-        {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel</Button>}
-        {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}>Delete</Button>}
-        {editingFunction && <Button variant="outline" onClick={onOpenSettings}>Settings</Button>}
+        {editingFunction && <Button variant="soft" onClick={onCancelEdit}><span className="material-symbols-outlined">cancel</span>Cancel</Button>}
+        {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}><span className="material-symbols-outlined">delete</span>Delete</Button>}
+        {editingFunction && <Button variant="outline" onClick={onOpenSettings}><span className="material-symbols-outlined">settings</span></Button>}
       </Flex>
     </Box>
   );
