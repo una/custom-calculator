@@ -93,6 +93,18 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     onCalculate(selectedFunction, variableValues);
   };
 
+  const handleExport = () => {
+    const dataStr = JSON.stringify(selectedFunction, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `${selectedFunction.name}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
   const handleSaveSettings = (updatedFunction) => {
     onUpdateFunction(updatedFunction);
     setSelectedFunction(updatedFunction);
@@ -176,6 +188,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               setExecutionResults([]);
             }}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
+            <Button variant="outline" onClick={handleExport}><span className="material-symbols-outlined">download</span></Button>
             <Button variant="outline" onClick={() => setSettingsOpen(true)}><span className="material-symbols-outlined">settings</span></Button>
           </Flex>
         </Flex>
