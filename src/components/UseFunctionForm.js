@@ -185,6 +185,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
           open={isSettingsOpen}
           onOpenChange={setSettingsOpen}
           onSave={handleSaveSettings}
+          onDelete={onDelete}
           func={selectedFunction}
           allTags={allTags}
         />

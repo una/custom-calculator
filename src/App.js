@@ -6,6 +6,7 @@ import UseFunctionForm from './components/UseFunctionForm';
 import ChainResult from './components/ChainResult';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import Toast from './components/Toast';
 import './App.css';
 
 function App() {
@@ -15,7 +16,7 @@ function App() {
   const [executionResults, setExecutionResults] = useState([]);
   const [activeTab, setActiveTab] = useState('use');
   const [authView, setAuthView] = useState('login');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [toastInfo, setToastInfo] = useState({ open: false, title: '', message: '' });
   const [selectedFunction, setSelectedFunction] = useState(null);
 
   const allTags = [...new Set(functions.flatMap(f => f.definition.settings?.tags || []))];
@@ -41,15 +42,6 @@ function App() {
   useEffect(() => {
     fetchFunctions();
   }, [fetchFunctions]);
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   const handleSetToken = (newToken) => {
     localStorage.setItem('token', newToken);
@@ -83,7 +75,11 @@ function App() {
         await fetchFunctions();
         setEditingFunction(null);
         setActiveTab('use');
-        setSuccessMessage(`Function "${funcData.name}" has been ${isUpdating ? 'updated' : 'created'} successfully.`);
+        setToastInfo({
+          open: true,
+          title: 'Success',
+          message: `Function "${funcData.name}" has been ${isUpdating ? 'updated' : 'created'} successfully.`,
+        });
       } else {
         console.error('Failed to save function');
       }
@@ -93,6 +89,7 @@ function App() {
   }, [token, fetchFunctions]);
 
   const handleDeleteFunction = useCallback(async (functionId) => {
+    const funcToDelete = functions.find(f => f.id === functionId);
     try {
       const response = await fetch(`/api/functions?id=${functionId}`, {
         method: 'DELETE',
@@ -100,14 +97,21 @@ function App() {
       });
       if (response.ok) {
         fetchFunctions();
-        setEditingFunction(null); // Close the dialog
+        setEditingFunction(null);
+        setActiveTab('use');
+        setSelectedFunction(null);
+        setToastInfo({
+          open: true,
+          title: 'Success',
+          message: `Function "${funcToDelete?.name}" has been deleted successfully.`,
+        });
       } else {
         console.error('Failed to delete function');
       }
     } catch (error) {
       console.error('Error deleting function:', error);
     }
-  }, [token, fetchFunctions]);
+  }, [token, fetchFunctions, functions]);
 
   const handleExecution = useCallback((funcToRun, initialValues) => {
     if (!funcToRun || !initialValues) {
@@ -308,13 +312,14 @@ function App() {
           </Tabs.Root>
         </Box>
 
-        {successMessage && (
-          <Box mt="4" p="3" style={{ background: 'var(--green-a2)', borderRadius: 'var(--radius-3)' }}>
-            <Text color="green">{successMessage}</Text>
-          </Box>
-        )}
-
         <ChainResult results={executionResults} />
+
+        <Toast
+          open={toastInfo.open}
+          setOpen={(isOpen) => setToastInfo(prev => ({ ...prev, open: isOpen }))}
+          title={toastInfo.title}
+          message={toastInfo.message}
+        />
 
         <Dialog.Root open={!!editingFunction} onOpenChange={(isOpen) => !isOpen && setEditingFunction(null)}>
           <Dialog.Content style={{ maxWidth: 450 }}>

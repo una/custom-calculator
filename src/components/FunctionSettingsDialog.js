@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, Button, Flex, TextField, Text, Badge, Box } from '@radix-ui/themes';
+import { Dialog, Button, Flex, TextField, Text, Badge, Box, AlertDialog } from '@radix-ui/themes';
 
-function FunctionSettingsDialog({ open, onOpenChange, onSave, func, allTags = [] }) {
+function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, func, allTags = [] }) {
   const [decimalPlaces, setDecimalPlaces] = useState(4);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
@@ -95,13 +95,39 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, func, allTags = []
           </Box>
         </Flex>
 
-        <Flex gap="3" mt="4" justify="end">
-          <Dialog.Close>
-            <Button variant="soft" color="gray">
-              <span className="material-symbols-outlined">cancel</span> Cancel
-            </Button>
-          </Dialog.Close>
-          <Button onClick={handleSave}><span className="material-symbols-outlined">save</span> Save</Button>
+        <Flex gap="3" mt="4" justify="between">
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button color="red"><span className="material-symbols-outlined">delete</span> Delete</Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content style={{ maxWidth: 450 }}>
+              <AlertDialog.Title>Delete Function</AlertDialog.Title>
+              <AlertDialog.Description size="2">
+                Are you sure you want to delete the function "{func?.name}"? This action cannot be undone.
+              </AlertDialog.Description>
+
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">
+                    Cancel
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button variant="solid" color="red" onClick={() => onDelete(func.name)}>
+                    Delete
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+          <Flex gap="3" justify="end">
+            <Dialog.Close>
+              <Button variant="soft" color="gray">
+                <span className="material-symbols-outlined">cancel</span> Cancel
+              </Button>
+            </Dialog.Close>
+            <Button onClick={handleSave}><span className="material-symbols-outlined">save</span> Save</Button>
+          </Flex>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
