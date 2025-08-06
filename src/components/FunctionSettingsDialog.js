@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, Button, Flex, TextField, Text, Badge, Box, AlertDialog } from '@radix-ui/themes';
 
-function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, func, allTags = [] }) {
+function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, functionData, allTags = [] }) {
   const [decimalPlaces, setDecimalPlaces] = useState(4);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
-    if (func) {
-      setDecimalPlaces(func.settings?.decimalPlaces ?? 4);
-      setTags(func.settings?.tags || []);
+    if (functionData) {
+      setDecimalPlaces(functionData.settings?.decimalPlaces ?? 4);
+      setTags(functionData.settings?.tags || []);
     }
-  }, [func]);
+  }, [functionData]);
 
   const handleSave = () => {
     onSave({
-      ...func,
-      settings: {
-        ...func.settings,
-        decimalPlaces: parseInt(decimalPlaces, 10),
-        tags,
-      }
+      ...functionData.settings,
+      decimalPlaces: parseInt(decimalPlaces, 10),
+      tags,
     });
     onOpenChange(false);
   };
@@ -50,7 +47,7 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, func, al
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 450 }}>
-        <Dialog.Title>Settings for {func?.name}</Dialog.Title>
+        <Dialog.Title>Settings for {functionData?.name}</Dialog.Title>
         <Dialog.Description size="2" mb="4">
           Manage settings for this function.
         </Dialog.Description>
@@ -103,7 +100,7 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, func, al
             <AlertDialog.Content style={{ maxWidth: 450 }}>
               <AlertDialog.Title>Delete Function</AlertDialog.Title>
               <AlertDialog.Description size="2">
-                Are you sure you want to delete the function "{func?.name}"? This action cannot be undone.
+                Are you sure you want to delete the function "{functionData?.name}"? This action cannot be undone.
               </AlertDialog.Description>
 
               <Flex gap="3" mt="4" justify="end">
@@ -113,7 +110,7 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, func, al
                   </Button>
                 </AlertDialog.Cancel>
                 <AlertDialog.Action>
-                  <Button variant="solid" color="red" onClick={() => onDelete(func.name)}>
+                  <Button variant="solid" color="red" onClick={() => onDelete(functionData.id)}>
                     Delete
                   </Button>
                 </AlertDialog.Action>

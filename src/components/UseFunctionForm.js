@@ -197,9 +197,9 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
         <FunctionSettingsDialog
           open={isSettingsOpen}
           onOpenChange={setSettingsOpen}
+          functionData={selectedFunction}
           onSave={handleSaveSettings}
           onDelete={onDelete}
-          func={selectedFunction}
           allTags={allTags}
         />
       )}

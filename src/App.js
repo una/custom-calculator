@@ -7,12 +7,14 @@ import ChainResult from './components/ChainResult';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Toast from './components/Toast';
+import FunctionSettingsDialog from './components/FunctionSettingsDialog';
 import './App.css';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [functions, setFunctions] = useState([]);
   const [editingFunction, setEditingFunction] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [executionResults, setExecutionResults] = useState([]);
   const [activeTab, setActiveTab] = useState('use');
   const [authView, setAuthView] = useState('login');
@@ -217,19 +219,10 @@ function App() {
     window.scrollTo(0, 0);
   }, [functions]);
 
-  const handleOpenSettingsFromEdit = () => {
-    // This is a bit of a hack to open the settings dialog
-    // It might be better to refactor this to have a single settings dialog
-    // that can be opened from either the "use" or "edit" screen
-    const useFunctionForm = document.querySelector('#use-function-form');
-    if (useFunctionForm) {
-      const settingsButton = useFunctionForm.querySelector('button[aria-label="Settings"]');
-      if (settingsButton) {
-        settingsButton.click();
-      }
-    }
+  const handleOpenSettings = () => {
+    setIsSettingsOpen(true);
   };
-  
+
   const handleCancelEdit = useCallback(() => {
     setEditingFunction(null);
   }, []);
@@ -369,10 +362,29 @@ function App() {
               functions={functions.map(f => ({...f.definition, name: f.name}))}
               onDelete={handleDeleteFunction}
               allTags={allTags}
-              onOpenSettings={handleOpenSettingsFromEdit}
+              onOpenSettings={handleOpenSettings}
             />
           </Dialog.Content>
         </Dialog.Root>
+
+        {editingFunction && (
+          <FunctionSettingsDialog
+            open={isSettingsOpen}
+            onOpenChange={setIsSettingsOpen}
+            functionData={editingFunction ? {...editingFunction.definition, name: editingFunction.name, id: editingFunction.id} : null}
+            onSave={(updatedSettings) => {
+              const updatedFunc = { 
+                ...editingFunction.definition, 
+                name: editingFunction.name, 
+                id: editingFunction.id, 
+                settings: updatedSettings 
+              };
+              handleSaveOrUpdateFunction(updatedFunc, true);
+              setIsSettingsOpen(false);
+            }}
+            allTags={allTags}
+          />
+        )}
       </Card>
     </div>
   );
