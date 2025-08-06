@@ -142,7 +142,7 @@ function App() {
           visiting.add(name);
           
           const subFunc = subFuncMap.get(name);
-          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{([\w@.-]+)\}/g) || [])
             .map(m => m.slice(1, -1));
             
           dependencies.forEach(dep => visit(dep));
@@ -158,7 +158,7 @@ function App() {
           let subFuncProcessedExpression = subFunc.expression;
           
           // Replace placeholders with results from other sub-functions
-          const dependencies = (subFunc.expression.match(/\{(.+?)\}/g) || [])
+          const dependencies = (subFunc.expression.match(/\{([\w@.-]+)\}/g) || [])
             .map(m => m.slice(1, -1));
           
           dependencies.forEach(depName => {
@@ -167,14 +167,6 @@ function App() {
             }
           });
 
-          // Manually replace variables that start with @
-          for (const key in currentScope) {
-            if (key.startsWith('@')) {
-              const value = currentScope[key];
-              const regex = new RegExp(`\\${key}`, 'g');
-              subFuncProcessedExpression = subFuncProcessedExpression.replace(regex, value);
-            }
-          }
 
           let subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
           const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
@@ -187,14 +179,6 @@ function App() {
         });
       }
       
-      // Manually replace variables that start with @
-      for (const key in currentScope) {
-        if (key.startsWith('@')) {
-          const value = currentScope[key];
-          const regex = new RegExp(`\\${key}`, 'g');
-          processedExpression = processedExpression.replace(regex, value);
-        }
-      }
   
       let finalResult = math.evaluate(processedExpression, currentScope);
       const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;

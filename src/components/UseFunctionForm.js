@@ -36,6 +36,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       const newVariableValues = {};
       const allVars = new Set();
       const mathjsKeywords = new Set(Object.keys(math));
+      const subFunctionNames = new Set(selectedFunction.subFunctions?.map(sf => sf.name) || []);
   
       // Collect explicitly defined variables
       if (selectedFunction.variables) {
@@ -48,22 +49,19 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       });
 
       // Collect variables from expressions
-      const allExpressions = [selectedFunction.expression];
-      selectedFunction.subFunctions?.forEach(sf => allExpressions.push(sf.expression));
+      const allExpressions = [selectedFunction.expression, ...selectedFunction.subFunctions?.map(sf => sf.expression) || []];
 
-      const variableRegex = /@[\w-]+/g;
+      const placeholderRegex = /\{([\w@.-]+)\}/g;
       allExpressions.forEach(expr => {
         if (!expr) return;
         
-        // Extract variables starting with @
-        const matches = expr.match(variableRegex);
-        if (matches) {
-          matches.forEach(match => allVars.add(match));
+        let match;
+        while ((match = placeholderRegex.exec(expr)) !== null) {
+          allVars.add(match[1]);
         }
 
-        // Sanitize for math.js parsing
-        let sanitizedExpr = expr.replace(/\{(.+?)\}/g, '1');
-        sanitizedExpr = sanitizedExpr.replace(variableRegex, '1');
+        // Sanitize for math.js parsing to find other symbols
+        let sanitizedExpr = expr.replace(placeholderRegex, '1');
 
         try {
             const node = math.parse(sanitizedExpr);
@@ -78,7 +76,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       });
       
       allVars.forEach(v => {
-        if (v) {
+        if (v && !subFunctionNames.has(v)) {
           newVariableValues[v] = '';
         }
       });
@@ -120,8 +118,8 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     const filteredVars = varsToRender.filter(v => v !== 'nestedResult');
 
     return filteredVars.map(v => (
-      <label key={v}>
-        <Text as="div" size="2" mb="1" weight="bold">
+      <label key={v} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "center" }}>
+        <Text as="div" size="3" mb="1" weight="bold">
           {v}
         </Text>
         <TextField.Root
