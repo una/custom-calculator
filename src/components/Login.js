@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, TextField, Box, Flex, Text, Heading } from '@radix-ui/themes';
-function Login({ setToken }) {
-  const [email, setEmail] = useState('');
+function Login({ setToken, setUser }) {
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
@@ -15,13 +15,14 @@ function Login({ setToken }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ login, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setToken(data.token);
+        setUser(data.user);
       } else {
         setMessage(data.message || 'An error occurred during login.');
       }
@@ -38,13 +39,13 @@ function Login({ setToken }) {
         <Flex direction="column" gap="3">
           <label>
             <Text as="div" size="2" mb="1" weight="bold">
-              Email
+              Username or Email
             </Text>
             <TextField.Root
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              autoComplete="username"
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
               required
             />
           </label>

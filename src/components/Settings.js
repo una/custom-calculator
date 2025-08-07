@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Button, TextField, Box, Flex, Text, Heading } from '@radix-ui/themes';
-function Signup() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+
+function Settings({ token, user, setUser }) {
+  const [username, setUsername] = useState(user.username);
+  const [email, setEmail] = useState(user.email);
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
@@ -11,30 +12,31 @@ function Signup() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/users/signup', {
-        method: 'POST',
+      const response = await fetch('/api/users/settings', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ token, username, email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Signup successful! You can now log in.');
+        setMessage('Settings updated successfully!');
+        setUser(data.user);
       } else {
-        setMessage(data.message || 'An error occurred during signup.');
+        setMessage(data.message || 'An error occurred during update.');
       }
     } catch (error) {
-      setMessage('An error occurred during signup.');
-      console.error('Signup error:', error);
+      setMessage('An error occurred during update.');
+      console.error('Settings update error:', error);
     }
   };
 
   return (
     <Box>
-      <Heading as="h2" size="4" mb="4">Signup</Heading>
+      <Heading as="h2" size="4" mb="4">User Settings</Heading>
       <form onSubmit={handleSubmit}>
         <Flex direction="column" gap="3">
           <label>
@@ -45,7 +47,6 @@ function Signup() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
             />
           </label>
           <label>
@@ -56,26 +57,25 @@ function Signup() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </label>
           <label>
             <Text as="div" size="2" mb="1" weight="bold">
-              Password
+              New Password
             </Text>
             <TextField.Root
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
+              placeholder="Leave blank to keep current password"
             />
           </label>
-          <Button type="submit">Signup</Button>
+          <Button type="submit">Update Settings</Button>
         </Flex>
       </form>
-      {message && <Text color={message.includes('successful') ? 'green' : 'red'} size="2" mt="2">{message}</Text>}
+      {message && <Text color={message.includes('successfully') ? 'green' : 'red'} size="2" mt="2">{message}</Text>}
     </Box>
   );
 }
 
-export default Signup;
+export default Settings;

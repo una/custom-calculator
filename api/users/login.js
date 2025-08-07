@@ -15,14 +15,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { email, password } = req.body;
+  const { login, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
+  if (!login || !password) {
+    return res.status(400).json({ message: 'Username/email and password are required.' });
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $1', [login]);
     const user = result.rows[0];
 
     if (!user) {
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       expiresIn: '1h',
     });
 
-    res.status(200).json({ token });
+    res.status(200).json({ token, user: { id: user.id, username: user.username, email: user.email } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal Server Error' });

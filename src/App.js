@@ -8,10 +8,14 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Toast from './components/Toast';
 import FunctionSettingsDialog from './components/FunctionSettingsDialog';
+import Settings from './components/Settings';
+import HamburgerMenu from './components/HamburgerMenu';
 import './App.css';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [user, setUser] = useState(null);
+  const [currentView, setCurrentView] = useState('main');
   const [functions, setFunctions] = useState([]);
   const [editingFunction, setEditingFunction] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -43,18 +47,43 @@ function App() {
   }, [token]);
 
   useEffect(() => {
+    if (token && !user) {
+      // Fetch user data if token exists but user is not set (e.g., on page refresh)
+      const fetchUser = async () => {
+        try {
+          // This assumes you have an endpoint to get user data from a token
+          // You might need to create this endpoint
+          const response = await fetch('/api/users/me', {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            handleLogout();
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+          handleLogout();
+        }
+      };
+      fetchUser();
+    }
     fetchFunctions();
-  }, [fetchFunctions]);
+  }, [token, user, fetchFunctions]);
 
-  const handleSetToken = (newToken) => {
+  const handleSetToken = (newToken, userData) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    setUser(userData);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setToken(null);
+    setUser(null);
     setFunctions([]);
+    setCurrentView('main');
   };
 
   const handleSaveOrUpdateFunction = useCallback(async (funcData, isUpdating) => {
@@ -260,7 +289,7 @@ function App() {
           <Heading>Custom Calculator</Heading>
           {authView === 'login' ? (
             <Box mt="4">
-              <Login setToken={handleSetToken} />
+              <Login setToken={handleSetToken} setUser={setUser} />
               <p>Don't have an account? <Button variant="ghost" onClick={() => setAuthView('signup')}>Signup</Button></p>
             </Box>
           ) : (
@@ -274,12 +303,31 @@ function App() {
     );
   }
 
+  if (currentView === 'settings') {
+    return (
+      <div className="App">
+        <Card>
+          <Flex justify="between" align="center">
+            <Heading>Settings</Heading>
+            <Button onClick={() => setCurrentView('main')}>Back to App</Button>
+          </Flex>
+          <Box mt="4">
+            <Settings token={token} user={user} setUser={setUser} />
+          </Box>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       <Card>
         <Flex justify="between" align="center">
           <Heading>Custom Calculator</Heading>
-          <Button onClick={handleLogout}>Logout</Button>
+          <HamburgerMenu
+            onSettingsClick={() => setCurrentView('settings')}
+            onLogoutClick={handleLogout}
+          />
         </Flex>
         
         <Box mt="4">
