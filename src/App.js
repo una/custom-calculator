@@ -405,11 +405,14 @@ function App() {
             onOpenChange={setIsSettingsOpen}
             functionData={editingFunction ? {...editingFunction.definition, name: editingFunction.name, id: editingFunction.id} : null}
             onSave={(updatedSettings) => {
-              const updatedFunc = { 
-                ...editingFunction.definition, 
-                name: editingFunction.name, 
-                id: editingFunction.id, 
-                settings: updatedSettings 
+              const updatedFunc = {
+                ...editingFunction.definition,
+                name: editingFunction.name,
+                id: editingFunction.id,
+                settings: {
+                  ...updatedSettings,
+                  decimalPlaces: isNaN(updatedSettings.decimalPlaces) ? 4 : updatedSettings.decimalPlaces,
+                },
               };
               handleSaveOrUpdateFunction(updatedFunc, true);
               setIsSettingsOpen(false);

@@ -103,7 +103,11 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     linkElement.click();
   };
 
-  const handleSaveSettings = (updatedFunction) => {
+  const handleSaveSettings = (updatedSettings) => {
+    const updatedFunction = {
+      ...selectedFunction,
+      settings: updatedSettings,
+    };
     onUpdateFunction(updatedFunction);
     setSelectedFunction(updatedFunction);
   };

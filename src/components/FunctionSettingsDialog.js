@@ -14,9 +14,10 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, function
   }, [functionData]);
 
   const handleSave = () => {
+    const parsedDecimalPlaces = parseInt(decimalPlaces, 10);
     onSave({
       ...functionData.settings,
-      decimalPlaces: parseInt(decimalPlaces, 10),
+      decimalPlaces: isNaN(parsedDecimalPlaces) ? 4 : parsedDecimalPlaces,
       tags,
     });
     onOpenChange(false);
