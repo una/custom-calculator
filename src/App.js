@@ -202,7 +202,9 @@ function App() {
           if (typeof subFuncResult === 'number') {
             subFuncResult = parseFloat(subFuncResult.toFixed(decimalPlaces));
           }
-          resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
+          if (settings?.subfunctionVisibility?.[subFunc.name] !== false) {
+            resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
+          }
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });

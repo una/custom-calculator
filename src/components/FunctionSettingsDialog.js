@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, Button, Flex, TextField, Text, Badge, Box, AlertDialog } from '@radix-ui/themes';
+import { Dialog, Button, Flex, TextField, Text, Badge, Box, AlertDialog, Checkbox, Card, Heading } from '@radix-ui/themes';
 
 function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, functionData, allTags = [] }) {
   const [decimalPlaces, setDecimalPlaces] = useState(4);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
+  const [subfunctionVisibility, setSubfunctionVisibility] = useState({});
 
   useEffect(() => {
     if (functionData) {
       setDecimalPlaces(functionData.settings?.decimalPlaces ?? 4);
       setTags(functionData.settings?.tags || []);
+      const initialVisibility = {};
+      if (functionData.subFunctions) {
+        functionData.subFunctions.forEach(sf => {
+          initialVisibility[sf.name] = functionData.settings?.subfunctionVisibility?.[sf.name] ?? true;
+        });
+      }
+      setSubfunctionVisibility(initialVisibility);
     }
   }, [functionData]);
 
@@ -19,8 +27,13 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, function
       ...functionData.settings,
       decimalPlaces: isNaN(parsedDecimalPlaces) ? 4 : parsedDecimalPlaces,
       tags,
+      subfunctionVisibility,
     });
     onOpenChange(false);
+  };
+
+  const handleVisibilityChange = (name, checked) => {
+    setSubfunctionVisibility(prev => ({ ...prev, [name]: checked }));
   };
 
   const handleAddTag = (tag) => {
@@ -91,6 +104,26 @@ function FunctionSettingsDialog({ open, onOpenChange, onSave, onDelete, function
             ))}
           </Flex>
           </Box>
+          {functionData?.subFunctions && functionData.subFunctions.length > 0 && (
+            <Box mt="4">
+              <Heading as="h3" size="3" mb="2">Subfunction Visibility</Heading>
+              <Card>
+                <Flex direction="column" gap="2">
+                  {functionData.subFunctions.map(subFunc => (
+                    <Text key={subFunc.name} as="label" size="2">
+                      <Flex gap="2">
+                        <Checkbox
+                          checked={!!subfunctionVisibility[subFunc.name]}
+                          onCheckedChange={(checked) => handleVisibilityChange(subFunc.name, checked)}
+                        />
+                        {subFunc.name}
+                      </Flex>
+                    </Text>
+                  ))}
+                </Flex>
+              </Card>
+            </Box>
+          )}
         </Flex>
 
         <Flex gap="3" mt="4" justify="between">
