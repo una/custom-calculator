@@ -203,7 +203,7 @@ function App() {
             subFuncResult = parseFloat(subFuncResult.toFixed(decimalPlaces));
           }
           if (settings?.subfunctionVisibility?.[subFunc.name] !== false) {
-            resultsToDisplay.push({ name: `${funcToRun.name} -> ${subFunc.name}`, result: subFuncResult });
+            resultsToDisplay.push({ name: `${subFunc.name}`, result: subFuncResult });
           }
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
@@ -217,7 +217,9 @@ function App() {
         finalResult = parseFloat(finalResult.toFixed(decimalPlaces));
       }
       resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
-      setExecutionResults(resultsToDisplay);
+      
+      const showSteps = resultsToDisplay.length > 1;
+      setExecutionResults({ steps: resultsToDisplay, showSteps });
   
     } catch (e) {
       console.error(e);
@@ -356,7 +358,7 @@ function App() {
                   onCalculate={handleExecution}
                   onEdit={handleInitiateEdit}
                   onDelete={handleDeleteFunction}
-                  setExecutionResults={setExecutionResults}
+                  setExecutionResults={(results) => setExecutionResults(results)}
                   onUpdateFunction={(updatedFunc) => handleSaveOrUpdateFunction(updatedFunc, true)}
                   allTags={allTags}
                   selectedFunction={selectedFunction}
@@ -377,7 +379,7 @@ function App() {
           </Tabs.Root>
         </Box>
 
-        <ChainResult results={executionResults} />
+        <ChainResult results={executionResults.steps || []} showSteps={executionResults.showSteps} />
 
         <Toast
           open={toastInfo.open}

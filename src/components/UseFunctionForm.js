@@ -137,7 +137,12 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
 
   return (
     <Box>
-      <Heading as="h2" size="4" mb="4">Use a Function</Heading>
+      {!selectedFunction ? (
+        <Heading as="h2" size="4" mb="4">Use a Function</Heading>
+      ) : (
+         <></>
+      )
+      }
       
       {!selectedFunction ? (
         <>
@@ -164,7 +169,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
           <Card>
             <Flex justify="between" align="center">
               <Box>
-                <Text weight="bold">{selectedFunction.name}</Text>
+                <Text weight="bold" size="6">{selectedFunction.name}</Text>
               </Box>
               <Flex gap="2">
                 {selectedFunction.settings?.tags?.map(tag => (
