@@ -71,12 +71,6 @@ function App() {
     fetchFunctions();
   }, [token, user, fetchFunctions]);
 
-  const handleSetToken = (newToken, userData) => {
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    setUser(userData);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -265,7 +259,7 @@ function App() {
           <Heading>Custom Calculator</Heading>
           {authView === 'login' ? (
             <Box mt="4">
-              <Login setToken={handleSetToken} setUser={setUser} />
+              <Login setToken={setToken} setUser={setUser} />
               <p>Don't have an account? <Button variant="ghost" onClick={() => setAuthView('signup')}>Signup</Button></p>
             </Box>
           ) : (

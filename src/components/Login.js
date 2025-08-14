@@ -21,6 +21,7 @@ function Login({ setToken, setUser }) {
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.setItem('token', data.token);
         setToken(data.token);
         setUser(data.user);
       } else {

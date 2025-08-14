@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
     // TODO: Replace hardcoded secret with process.env.JWT_SECRET in production
     const token = jwt.sign({ userId: user.id }, "a-secure-secret-for-jwt", {
-      expiresIn: '1h',
+      expiresIn: '30d',
     });
 
     res.status(200).json({ token, user: { id: user.id, username: user.username, email: user.email } });
