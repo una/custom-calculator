@@ -24,7 +24,6 @@ function App() {
   const [authView, setAuthView] = useState('login');
   const [toastInfo, setToastInfo] = useState({ open: false, title: '', message: '' });
   const [selectedFunction, setSelectedFunction] = useState(null);
-  const fileInputRef = useRef(null);
 
   const allTags = [...new Set(functions.flatMap(f => f.definition.settings?.tags || []))];
 
@@ -252,33 +251,6 @@ function App() {
     }
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const fileReader = new FileReader();
-    fileReader.readAsText(file, "UTF-8");
-    fileReader.onload = e => {
-      try {
-        const { id, ...importedFunc } = JSON.parse(e.target.result);
-        handleSaveOrUpdateFunction(importedFunc, false);
-      } catch (error) {
-        console.error("Error parsing imported file:", error);
-        setToastInfo({
-          open: true,
-          title: 'Import Error',
-          message: 'Could not parse the selected file. Please ensure it is a valid exported function JSON file.',
-        });
-      }
-    };
-    // Reset the input value to allow re-importing the same file
-    event.target.value = null;
-  };
-
   const handleCalculateTabClick = () => {
     if (activeTab === 'use') {
       setSelectedFunction(null);
@@ -339,16 +311,6 @@ function App() {
             <Tabs.List>
               <Tabs.Trigger value="use" onClick={handleCalculateTabClick}><span className="material-symbols-outlined">calculate</span> Calculate</Tabs.Trigger>
               <Tabs.Trigger value="create"><span className="material-symbols-outlined">add</span> Create New Function</Tabs.Trigger>
-              <Button variant="ghost" onClick={handleImportClick}>
-                <span className="material-symbols-outlined">upload</span> Import
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".json"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
             </Tabs.List>
 
             <Box pt="3">

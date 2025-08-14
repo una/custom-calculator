@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, TextArea, Box, Flex, Text, Heading, Card, Badge } from '@radix-ui/themes';
 
 function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, functions, onDelete, allTags = [], onOpenSettings }) {
@@ -7,6 +7,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   const [variables, setVariables] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
   
   const [subFunctions, setSubFunctions] = useState([]);
 
@@ -26,6 +27,31 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setSubFunctions([]);
     }
   }, [editingFunction]);
+
+  const handleImport = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          const { name, expression, variables, notes, subFunctions: subFuncs } = importedData;
+          setName(name || '');
+          setExpression(expression || '');
+          setVariables(variables || '');
+          setNotes(notes || '');
+          setSubFunctions((subFuncs || []).map(sf => ({ ...sf, id: Date.now() + Math.random() })));
+        } catch (err) {
+          setError('Failed to parse JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current.click();
+  };
 
   const handleAddSubFunction = () => {
     setSubFunctions([...subFunctions, { id: Date.now(), name: '', expression: '', variables: '' }]);
@@ -70,6 +96,13 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   return (
     <Box>
       <Flex direction="column" gap="3">
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleImport}
+          accept=".json"
+        />
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
             Function Name*
@@ -123,6 +156,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       
       <Flex gap="3" mt="4">
         <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
+        <Button variant="soft" onClick={triggerFileSelect}><span className="material-symbols-outlined">upload</span> Import</Button>
         {editingFunction && <Button variant="soft" onClick={onCancelEdit}><span className="material-symbols-outlined">cancel</span>Cancel</Button>}
         {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}><span className="material-symbols-outlined">delete</span>Delete</Button>}
         {editingFunction && <Button variant="outline" onClick={onOpenSettings}><span className="material-symbols-outlined">settings</span></Button>}
