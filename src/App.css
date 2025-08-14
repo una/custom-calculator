@@ -1,3 +1,7 @@
+.rt-Card:where(.rt-variant-surface) {
+    --card-background-color: white;
+}
+
 .App {
   margin: 1rem auto;
   height: 100dvh;
@@ -8,7 +12,8 @@
   > div {
     max-width: 380px;
     margin: 1rem auto;
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: var(--card-background-color);
+    height: calc(100dvh - 2rem);
   }
 }
 

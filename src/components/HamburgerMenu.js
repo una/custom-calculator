@@ -6,8 +6,13 @@ function HamburgerMenu({ onSettingsClick, onLogoutClick }) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <IconButton variant="ghost">
-          <HamburgerMenuIcon />
+        <IconButton
+          size="3"
+          variant="soft"
+          style={{ backgroundColor: "var(--card-background-color)" }}
+          aria-label="Settings"
+        >
+          <HamburgerMenuIcon width="1.25rem" height="1.25rem" />
         </IconButton>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
