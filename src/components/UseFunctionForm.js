@@ -35,7 +35,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     if (selectedFunction) {
       const newVariableValues = {};
       const allVars = new Set();
-      const mathjsKeywords = new Set(Object.keys(math));
+      const mathjsKeywords = new Set([...Object.keys(math), 'sqrt']);
       const subFunctionNames = new Set(selectedFunction.subFunctions?.map(sf => sf.name) || []);
   
       // Collect explicitly defined variables

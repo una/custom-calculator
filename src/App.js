@@ -291,7 +291,6 @@ function App() {
 
   return (
     <div className="App">
-      <Card>
         <Flex justify="between" align="center">
           <Heading>Custom Calculator</Heading>
           <HamburgerMenu
@@ -380,7 +379,6 @@ function App() {
             allTags={allTags}
           />
         )}
-      </Card>
     </div>
   );
 }
