@@ -155,9 +155,9 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       {error && <Text color="red" size="2" mt="2">{error}</Text>}
       
       <Flex gap="3" mt="4">
-        <Button onClick={handleSubmit}>{editingFunction ? 'Update Function' : 'Save Function'}</Button>
-        <Button variant="soft" onClick={triggerFileSelect}><span className="material-symbols-outlined">upload</span> Import</Button>
-        {editingFunction && <Button variant="soft" onClick={onCancelEdit}><span className="material-symbols-outlined">cancel</span>Cancel</Button>}
+        <Button onClick={handleSubmit}>{editingFunction ? 'Update' : 'Save'}</Button>
+        {!editingFunction && <Button variant="soft" onClick={triggerFileSelect}><span className="material-symbols-outlined">download</span> Import</Button>}  
+        {editingFunction && <Button variant="soft" onClick={onCancelEdit}>Cancel</Button>}
         {editingFunction && <Button color="red" variant="soft" onClick={() => onDelete(editingFunction.id)}><span className="material-symbols-outlined">delete</span>Delete</Button>}
         {editingFunction && <Button variant="outline" onClick={onOpenSettings}><span className="material-symbols-outlined">settings</span></Button>}
       </Flex>

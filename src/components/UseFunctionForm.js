@@ -230,7 +230,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
               setExecutionResults([]);
             }}>Cancel</Button>
             <Button variant="outline" onClick={() => onEdit(selectedFunction)}>Edit</Button>
-            <Button variant="outline" onClick={handleExport}><span className="material-symbols-outlined">download</span></Button>
+            <Button variant="outline" onClick={handleExport}><span className="material-symbols-outlined">upload</span></Button>
             <Button variant="outline" onClick={() => setSettingsOpen(true)}><span className="material-symbols-outlined">settings</span></Button>
           </Flex>
         </Flex>

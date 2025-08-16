@@ -346,7 +346,7 @@ function App() {
         />
 
         <Dialog.Root open={!!editingFunction} onOpenChange={(isOpen) => !isOpen && setEditingFunction(null)}>
-          <Dialog.Content style={{ maxWidth: 450 }}>
+          <Dialog.Content style={{ maxWidth: 380 }}>
             <Dialog.Title>Edit Function</Dialog.Title>
             <CreateFunctionForm 
               onSaveOrUpdate={handleSaveOrUpdateFunction} 
