@@ -17,7 +17,9 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       return <Text>No functions found with the selected tag.</Text>;
     }
 
-    return filteredFunctions.map(func => (
+    const sortedFunctions = [...filteredFunctions].sort((a, b) => a.name.localeCompare(b.name));
+
+    return sortedFunctions.map(func => (
       <Box key={func.name} style={{ marginTop: '4px' }}>
         <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'space-between' }}>
           <Text>{func.name}</Text>
@@ -88,7 +90,10 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
   }, [selectedFunction]);
 
   const handleCalculate = () => {
-    onCalculate(selectedFunction, variableValues);
+    const numericVariableValues = Object.fromEntries(
+      Object.entries(variableValues).map(([key, value]) => [key, parseFloat(value) || 0])
+    );
+    onCalculate(selectedFunction, numericVariableValues);
   };
 
   const handleExport = () => {
@@ -128,8 +133,8 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
         </Text>
         <TextField.Root
           type="number"
-          value={variableValues[v] || ''}
-          onChange={e => setVariableValues({ ...variableValues, [v]: parseFloat(e.target.value) || 0 })}
+          value={variableValues[v]}
+          onChange={e => setVariableValues({ ...variableValues, [v]: e.target.value })}
         />
       </label>
     ));
