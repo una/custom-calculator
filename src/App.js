@@ -192,17 +192,19 @@ function App() {
 
           let subFuncResult = math.evaluate(subFuncProcessedExpression, currentScope);
           const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
-          if (typeof subFuncResult === 'number') {
-            subFuncResult = parseFloat(subFuncResult.toFixed(decimalPlaces));
-          }
+          
           if (settings?.subfunctionVisibility?.[subFunc.name] !== false) {
-            resultsToDisplay.push({ name: `${subFunc.name}`, result: subFuncResult });
+            let displayResult = subFuncResult;
+            if (typeof displayResult === 'number') {
+              displayResult = parseFloat(displayResult.toFixed(decimalPlaces));
+            }
+            resultsToDisplay.push({ name: `${subFunc.name}`, result: displayResult });
           }
+          
           currentScope[subFunc.name] = subFuncResult;
           processedExpression = processedExpression.split(`{${subFunc.name}}`).join(subFuncResult);
         });
       }
-      
   
       let finalResult = math.evaluate(processedExpression, currentScope);
       const decimalPlaces = settings?.decimalPlaces === '' ? 4 : settings?.decimalPlaces ?? 4;
