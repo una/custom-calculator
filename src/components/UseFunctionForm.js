@@ -6,6 +6,7 @@ import FunctionSettingsDialog from './FunctionSettingsDialog';
 function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutionResults, onUpdateFunction, allTags = [], selectedFunction, setSelectedFunction }) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [variableValues, setVariableValues] = useState({});
+  const [variableUnits, setVariableUnits] = useState({});
   const [selectedTag, setSelectedTag] = useState(null);
 
   const filteredFunctions = selectedTag
@@ -22,7 +23,7 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     return sortedFunctions.map(func => (
       <Box key={func.name} style={{ marginTop: '4px' }}>
         <Button onClick={() => handleSelectFunction(func)} variant="soft" style={{ width: '100%', justifyContent: 'space-between' }}>
-          <Text>{func.name}</Text>
+          <Text size="3">{func.name}</Text>
           <Flex gap="2">
             {func.settings?.tags?.map(tag => (
               <Badge key={tag} color="gray">{tag}</Badge>
@@ -36,17 +37,39 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
   useEffect(() => {
     if (selectedFunction) {
       const newVariableValues = {};
+      const newVariableUnits = {};
       const allVars = new Set();
       const mathjsKeywords = new Set([...Object.keys(math), 'sqrt', 'sin', 'cos', 'tan', 'log', 'exp']);
       const subFunctionNames = new Set(selectedFunction.subFunctions?.map(sf => sf.name) || []);
   
+      const processVariablesString = (varsString) => {
+        if (!varsString) return;
+        const variableRegex = /([\w@.-]+)\s*(?:\(([^)]+)\))?/;
+        varsString.split(',').forEach(v => {
+          const trimmedV = v.trim();
+          if (trimmedV) {
+            const match = trimmedV.match(variableRegex);
+            if (match) {
+              const varName = match[1];
+              const unit = match[2];
+              allVars.add(varName);
+              if (unit) {
+                newVariableUnits[varName] = unit;
+              }
+            } else {
+              allVars.add(trimmedV);
+            }
+          }
+        });
+      };
+
       // Collect explicitly defined variables
       if (selectedFunction.variables) {
-        selectedFunction.variables.split(',').forEach(v => v && allVars.add(v.trim()));
+        processVariablesString(selectedFunction.variables);
       }
       selectedFunction.subFunctions?.forEach(sf => {
         if (sf.variables) {
-          sf.variables.split(',').forEach(v => v && allVars.add(v.trim()));
+          processVariablesString(sf.variables);
         }
       });
 
@@ -84,8 +107,10 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
       });
   
       setVariableValues(newVariableValues);
+      setVariableUnits(newVariableUnits);
     } else {
       setVariableValues({});
+      setVariableUnits({});
     }
   }, [selectedFunction]);
 
@@ -127,15 +152,20 @@ function UseFunctionForm({ functions, onCalculate, onEdit, onDelete, setExecutio
     const filteredVars = varsToRender.filter(v => v !== 'nestedResult');
 
     return filteredVars.map(v => (
-      <label key={v} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "center" }}>
-        <Text as="div" size="3" mb="1" weight="bold">
+      <label key={v} style={{ display: "grid", gridTemplateColumns: "1fr 2fr", alignItems: "center", gap: '8px' }}>
+        <Text as="div" size="3" weight="bold">
           {v}
         </Text>
-        <TextField.Root
-          type="number"
-          value={variableValues[v]}
-          onChange={e => setVariableValues({ ...variableValues, [v]: e.target.value })}
-        />
+        <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "1fr auto", alignItems: "center" }}>
+          <TextField.Root
+            type="number"
+            value={variableValues[v]}
+            onChange={e => setVariableValues({ ...variableValues, [v]: e.target.value })}
+          />
+          <Text style={{ minWidth: '3rem' }} as="div" size="5" color="gray">
+            {variableUnits[v] || ''}
+          </Text>
+        </div>
       </label>
     ));
   };

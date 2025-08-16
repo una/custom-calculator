@@ -116,9 +116,9 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
 
         <label>
           <Text as="div" size="2" mb="1" weight="bold">
-            Main Variables (comma-separated)*
+            Main Variables (e.g. var1(unit), var2)
           </Text>
-          <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} />
+          <TextField.Root type="text" value={variables} onChange={(e) => setVariables(e.target.value)} placeholder="var1(unit1), var2(unit2)" />
         </label>
 
         <label>
@@ -136,7 +136,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
               <Flex direction="column" gap="2">
                 <TextField.Root placeholder="Name" value={sf.name} onChange={e => handleSubFunctionChange(sf.id, 'name', e.target.value)} />
                 <TextField.Root placeholder="Expression" value={sf.expression} onChange={e => handleSubFunctionChange(sf.id, 'expression', e.target.value)} />
-                <TextField.Root placeholder="Variables (optional, comma-separated)" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
+                <TextField.Root placeholder="e.g. var1(unit), var2" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
                 <Button size="1" color="red" variant="soft" onClick={() => handleRemoveSubFunction(sf.id)} style={{ alignSelf: 'flex-end' }}>Remove</Button>
               </Flex>
             </Box>
