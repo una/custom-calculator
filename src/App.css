@@ -4,7 +4,8 @@
 
 .App {
   height: 100dvh;
-  overflow: scroll;
+  overflow-x: hidden;
+  overflow-y: scroll;
   box-sizing: border-box;
   font-size: 18px;
   padding: 1rem;

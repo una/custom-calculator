@@ -12,6 +12,8 @@ import Settings from './components/Settings';
 import HamburgerMenu from './components/HamburgerMenu';
 import './App.css';
 
+const version = process.env.REACT_APP_VERSION || 'Beta 0.0.1';
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
@@ -295,6 +297,7 @@ function App() {
     <div className="App">
         <Flex justify="between" align="center">
           <Heading>Custom Calculator</Heading>
+          {version && <Text size="2" weight="bold"> {version}</Text>}
           <HamburgerMenu
             onSettingsClick={() => setCurrentView('settings')}
             onLogoutClick={handleLogout}
