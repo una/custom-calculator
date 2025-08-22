@@ -15,7 +15,7 @@ function ChainResult({ results, showSteps }) {
       <Card>
         <Box p="2" style={{ background: 'var(--green-a3)', borderRadius: 'var(--radius-2)'}}>
           <Flex justify="between">
-            <Text weight="bold" size="5">{finalResult.name}:</Text>
+            <Text weight="bold" size="5">Result:</Text>
             <Text weight="bold" size="5">{finalResult.result}{finalResult.unit ? ` ${finalResult.unit}` : ''}</Text>
           </Flex>
         </Box>
