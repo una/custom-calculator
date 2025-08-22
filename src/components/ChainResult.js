@@ -21,7 +21,7 @@ function ChainResult({ results, showSteps }) {
         </Box>
         {showSteps && (
           <>
-            <Heading as="h3" size="3" mt="2" mb="2">Calculation Steps</Heading>
+            <Heading as="h3" size="3" mt="2" mb="2">Subfunction results:</Heading>
             <Flex direction="column" gap="1" mb="2">
               {steps.map((item, index) => (
                 <Flex key={index} justify="between">
