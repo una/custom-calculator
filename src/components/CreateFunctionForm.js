@@ -5,6 +5,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
   const [name, setName] = useState('');
   const [expression, setExpression] = useState('');
   const [variables, setVariables] = useState('');
+  const [unit, setUnit] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
@@ -13,17 +14,19 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
 
   useEffect(() => {
     if (editingFunction) {
-      const { name, expression, variables, notes, subFunctions: subFuncs, settings } = editingFunction;
+      const { name, expression, variables, notes, unit, subFunctions: subFuncs, settings } = editingFunction;
       setName(name);
       setNotes(notes || '');
       setExpression(expression || '');
       setVariables(variables || '');
+      setUnit(unit || '');
       setSubFunctions((subFuncs || []).map(sf => ({ ...sf, id: Date.now() + Math.random() })));
     } else {
       setName('');
       setExpression('');
       setVariables('');
       setNotes('');
+      setUnit('');
       setSubFunctions([]);
     }
   }, [editingFunction]);
@@ -76,6 +79,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       notes, 
       expression, 
       variables,
+      unit,
       subFunctions: subFunctions.map(({ id, ...rest }) => rest), // Remove temporary id
       id: editingFunction ? editingFunction.id : undefined,
       settings: { ...editingFunction?.settings }
@@ -89,6 +93,7 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
       setExpression('');
       setVariables('');
       setNotes('');
+      setUnit('');
       setSubFunctions([]);
     }
   };
@@ -128,6 +133,18 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
           <TextField.Root type="text" value={expression} onChange={(e) => setExpression(e.target.value)} rows={2}/>
         </label>
 
+        <label>
+          <Text as="div" size="2" mb="1" weight="bold">
+            Result Unit (optional)
+          </Text>
+          <TextField.Root
+            type="text"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="e.g. kg, m/s, etc."
+          />
+        </label>
+
         <Card>
           <Heading as="h3" size="3" mb="2">Sub-functions (optional)</Heading>
           <Text as="p" size="2" mb="3">Define helper functions that can be used in your main expression. Use <strong>{`{subFunctionName}`}</strong> to access their results.</Text>
@@ -136,7 +153,8 @@ function CreateFunctionForm({ onSaveOrUpdate, editingFunction, onCancelEdit, fun
               <Flex direction="column" gap="2">
                 <TextField.Root placeholder="Name" value={sf.name} onChange={e => handleSubFunctionChange(sf.id, 'name', e.target.value)} />
                 <TextField.Root placeholder="Expression" value={sf.expression} onChange={e => handleSubFunctionChange(sf.id, 'expression', e.target.value)} />
-                <TextField.Root placeholder="e.g. var1(unit), var2" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
+                <TextField.Root placeholder="e.g. var1, var2" value={sf.variables} onChange={e => handleSubFunctionChange(sf.id, 'variables', e.target.value)} />
+                <TextField.Root placeholder="Result Unit (optional)" value={sf.unit} onChange={e => handleSubFunctionChange(sf.id, 'unit', e.target.value)} />
                 <Button size="1" color="red" variant="soft" onClick={() => handleRemoveSubFunction(sf.id)} style={{ alignSelf: 'flex-end' }}>Remove</Button>
               </Flex>
             </Box>

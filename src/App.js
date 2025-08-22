@@ -146,7 +146,7 @@ function App() {
       return;
     }
     try {
-      const { subFunctions, expression } = funcToRun;
+      const { subFunctions, expression, unit } = funcToRun;
       let currentScope = { ...initialValues };
       let resultsToDisplay = [];
       let processedExpression = expression;
@@ -200,7 +200,7 @@ function App() {
             if (typeof displayResult === 'number') {
               displayResult = parseFloat(displayResult.toFixed(decimalPlaces));
             }
-            resultsToDisplay.push({ name: `${subFunc.name}`, result: displayResult });
+            resultsToDisplay.push({ name: `${subFunc.name}`, result: displayResult, unit: subFunc.unit });
           }
           
           currentScope[subFunc.name] = subFuncResult;
@@ -213,7 +213,7 @@ function App() {
       if (typeof finalResult === 'number') {
         finalResult = parseFloat(finalResult.toFixed(decimalPlaces));
       }
-      resultsToDisplay.push({ name: funcToRun.name, result: finalResult });
+      resultsToDisplay.push({ name: funcToRun.name, result: finalResult, unit: unit });
       
       const showSteps = resultsToDisplay.length > 1;
       setExecutionResults({ steps: resultsToDisplay, showSteps });
